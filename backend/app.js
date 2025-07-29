@@ -1,15 +1,18 @@
-const express = require('express');
-const cors = require('cors');
+// backend/app.js
 
+const express = require('express');
 const app = express();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
+app.use(express.json()); // for parsing JSON requests
 
-// Routes placeholder
+// Example Route
 app.get('/', (req, res) => {
-  res.send('API is running...');
+  res.send('✨ Hello from SprintMate API!');
 });
+
+// You can plug in more routes here, like:
+// const userRoutes = require('./routes/users');
+// app.use('/api/users', userRoutes);
 
 module.exports = app;
