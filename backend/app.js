@@ -14,5 +14,6 @@ app.get('/', (req, res) => {
 // You can plug in more routes here, like:
 // const userRoutes = require('./routes/users');
 // app.use('/api/users', userRoutes);
-
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
 module.exports = app;
