@@ -66,12 +66,12 @@ exports.register = async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'deebikaneelakandan@gmail.com', // your real email
-        pass: 'pkny rrca tqlg xikr' // use an app password, not your real password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
       }
     });
     const mailOptions = {
-      from: 'deebikaneelakandan@gmail.com',
+      from: process.env.EMAIL_USER,
       to: email,
       subject: 'Your OTP for SprintMate Registration',
       text: `Your OTP is: ${otp}`
@@ -118,12 +118,12 @@ exports.login = async (req, res) => {
       const transporter = nodemailer.createTransport({
         service: 'gmail',
         auth: {
-          user: 'deebikaneelakandan@gmail.com',
-          pass: 'pkny rrca tqlg xikr'
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
         }
       });
       const mailOptions = {
-        from: 'deebikaneelakandan@gmail.com',
+        from: process.env.EMAIL_USER,
         to: email,
         subject: 'Your OTP for SprintMate Login',
         text: `Your OTP is: ${otp}`
@@ -217,12 +217,12 @@ exports.forgotPassword = async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
-        user: 'deebikaneelakandan@gmail.com',
-        pass: 'pkny rrca tqlg xikr'
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
       }
     });
     const mailOptions = {
-      from: 'deebikaneelakandan@gmail.com',
+      from: process.env.EMAIL_USER,
       to: email,
       subject: 'Your OTP for SprintMate Password Reset',
       text: `Your OTP for password reset is: ${otp}`
