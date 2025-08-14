@@ -1,5 +1,4 @@
 // backend/app.js
-
 const express = require('express');
 const app = express();
 
@@ -11,9 +10,20 @@ app.get('/', (req, res) => {
   res.send('✨ Hello from SprintMate API!');
 });
 
-// You can plug in more routes here, like:
-// const userRoutes = require('./routes/users');
-// app.use('/api/users', userRoutes);
+
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
+
+const chatbotRoutes = require('./routes/chatbotRoutes');
+app.use('/api/chatbot', chatbotRoutes);
+
+const taskRoutes = require('./routes/taskRoutes');
+app.use('/api/tasks', taskRoutes);
+
+const scheduleRoutes = require('./routes/scheduleRoutes');
+app.use('/api/schedule', scheduleRoutes);
+
+const progressRoutes = require('./routes/progressRoutes');
+app.use('/api/progress', progressRoutes);
+
 module.exports = app;
