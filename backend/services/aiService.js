@@ -16,19 +16,22 @@ When asked to create a study plan, always respond with a JSON object in the foll
   },
   "tasks": [
     {
-      "name": "...",
+      "name": "...", // Give each task a unique, subject-appropriate title
+      "topic": "...", // Briefly describe the unique topic or portion for the day
       "date": "...",
       "duration": ...,
       "starting_time": "...",
-      "repeat_pattern": "...",
-      "description": "...",
+      "description": "...", // Describe what will be covered uniquely for each day
       "status": "pending"
     },
     ...
   ]
 }
 
-Do not include any extra text outside the JSON object.
+Your job is to think creatively and break down the subject or plan into unique daily tasks, portions, or topics, based on the user's input. 
+For example, if the user asks for a 1-month ML plan, generate 30 unique ML topics and assign each to a different day. Do not repeat the same topic. 
+If the subject is unfamiliar, research and break it down into logical learning steps. 
+Always ensure each task is unique and relevant to the subject and duration. Do not include any extra text outside the JSON object.
 `;
 
 async function askMentor({ message, context }) {

@@ -3,7 +3,7 @@ const Conversation = require('../models/Conversation');
 const Schedule = require('../models/Schedule');
 const Task = require('../models/Task');
 const { askMentor, extractPlanDetails } = require('../services/aiService');
-const { createSchedule, reallocateMissed } = require('../services/schedulerService');
+
 
 const CONTEXT_TURNS = parseInt(process.env.CONTEXT_TURNS || '8', 10);
 const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434'; // not used directly here, but handy
@@ -47,7 +47,7 @@ async function createSchedule(req, res) {
     const { message } = req.body;
 
     // Get AI plan details from message
-    const aiResponse = await askMentor({ message });
+    const aiResponse = await askMentor({ message, context: [] });
     const [scheduleDetails, tasksArray] = extractPlanDetails(aiResponse, message);
 
     // Validate schedule details

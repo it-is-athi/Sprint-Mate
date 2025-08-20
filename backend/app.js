@@ -15,6 +15,6 @@ const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
 const chatbotRoutes = require('./routes/chatbotRoutes');
-app.use('/api/chatbot', chatbotRoutes);
+app.use('/api/bot', chatbotRoutes);
 
 module.exports = app;
