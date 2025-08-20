@@ -17,13 +17,4 @@ app.use('/api/auth', authRoutes);
 const chatbotRoutes = require('./routes/chatbotRoutes');
 app.use('/api/chatbot', chatbotRoutes);
 
-const taskRoutes = require('./routes/taskRoutes');
-app.use('/api/tasks', taskRoutes);
-
-const scheduleRoutes = require('./routes/scheduleRoutes');
-app.use('/api/schedule', scheduleRoutes);
-
-const progressRoutes = require('./routes/progressRoutes');
-app.use('/api/progress', progressRoutes);
-
 module.exports = app;
