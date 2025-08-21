@@ -85,7 +85,6 @@ exports.register = async (req, res) => {
   }
 };
 
-// Login user
 exports.login = async (req, res) => {
   const User = require('../models/User');
   const bcrypt = require('bcryptjs');
@@ -133,7 +132,7 @@ exports.login = async (req, res) => {
       return res.status(403).json({ message: 'User not verified. OTP sent to email.' });
     }
 
-    // If verified, allow login (return JWT token and refresh token)
+    // If verified, allow login (set JWT and refresh token in cookies)
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
@@ -144,39 +143,33 @@ exports.login = async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET,
       { expiresIn: '7d' }
     );
+
+    // Set tokens in HTTP-only cookies
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 1000 // 1 hour
+    });
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
     res.status(200).json({
-      message: 'Login successful. User is verified.',
-      token,
-      refreshToken
+      message: 'Login successful. User is verified.'
     });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server error' });
   }
 };
-
-const jwt = require('jsonwebtoken');
-const BlacklistedToken = require('../models/BlacklistedToken'); // Make sure this model exists
-
-// Logout user with token blacklisting
+// Logout user by clearing cookies
 exports.logout = async (req, res) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(400).json({ message: 'No token provided' });
-    }
-    const token = authHeader.split(' ')[1];
-    const decoded = jwt.decode(token);
-    const expiresAt = new Date(decoded.exp * 1000);
-
-    await BlacklistedToken.create({ token, expiresAt });
-
-    res.status(200).json({ message: 'Logged out successfully. Token blacklisted.' });
-  } catch (error) {
-    res.status(500).json({ message: 'Server error' });
-  }
+  res.clearCookie('token');
+  res.clearCookie('refreshToken');
+  res.status(200).json({ message: 'Logged out successfully.' });
 };
-
 // Get current user info
 exports.getMe = async (req, res) => {
   const User = require('../models/User');
