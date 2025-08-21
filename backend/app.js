@@ -10,7 +10,8 @@ app.get('/', (req, res) => {
   res.send('✨ Hello from SprintMate API!');
 });
 
-
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
 
