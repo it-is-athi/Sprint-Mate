@@ -74,6 +74,14 @@ async function createSchedule(req, res) {
     }));
     await Task.insertMany(tasksToCreate);
 
+    // Clean up task dates before saving
+    tasksToCreate.forEach(task => {
+      if (typeof task.date === 'string' && task.date.match(/^\d{4}-\d{2}-\d{2}-\d{4}-\d{2}-\d{2}$/)) {
+        // If date is a range like "2023-03-13-2023-03-31", take the first date
+        task.date = task.date.split('-').slice(0, 3).join('-');
+      }
+    });
+
     // Save conversation
     await Conversation.create({ userId, role: 'user', message });
     await Conversation.create({ userId, role: 'assistant', message: `Schedule "${scheduleDetails.title}" created with ${tasksArray.length} tasks.` });

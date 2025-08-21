@@ -16,9 +16,9 @@ When asked to create a study plan, always respond with a JSON object in the foll
   },
   "tasks": [
     {
-      "name": "...", // Give each task a unique, subject-appropriate title
-      "topic": "...", // Briefly describe the unique topic or portion for the day
-      "date": "...",
+      "name": "...", // Give each task with the same schedule name make sure all tasks belonging to the same schedule have the same name
+      "topic": "...", // All other subtopics that describe the task should be in here separated by "-"
+      "date": "...",// Use a single date in YYYY-MM-DD format for each task. Do NOT use a date range.
       "duration": ...,
       "starting_time": "...",
       "description": "...", // Describe what will be covered uniquely for each day
@@ -42,15 +42,32 @@ ${context.join('\n')}
 User: ${message}
 Assistant:`;
 
-  const response = await fetch(`${OLLAMA_URL}/api/generate`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: OLLAMA_MODEL, prompt, stream: false })
-  });
+  // Use Groq API only
+  if (process.env.GROQ_API_KEY && process.env.GROQ_API_URL) {
+    const response = await fetch(process.env.GROQ_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+      },
+      body: JSON.stringify({
+        model: process.env.GROQ_MODEL || 'llama3-8b-8192',
+        messages: [
+          { role: 'system', content: mentorSystemPrompt },
+          { role: 'user', content: message }
+        ],
+        temperature: 0.7
+      })
+    });
 
-  if (!response.ok) throw new Error(`Ollama error: ${response.status}`);
-  const data = await response.json();
-  return (data && data.response) ? data.response.trim() : 'Sorry, I could not respond.';
+    if (!response.ok) throw new Error(`Groq error: ${response.status}`);
+    const data = await response.json();
+    return (data.choices && data.choices[0].message.content)
+      ? data.choices[0].message.content.trim()
+      : 'Sorry, I could not respond.';
+  } else {
+    throw new Error('Groq API credentials are not set in .env');
+  }
 }
 
 function extractPlanDetails(aiResponse, originalMessage) {
