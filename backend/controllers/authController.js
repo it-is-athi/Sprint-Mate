@@ -1,6 +1,11 @@
+// backend/controllers/authController.js
+const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const nodemailer = require('nodemailer');
+const jwt = require('jsonwebtoken');
+
 // Verify OTP
 exports.verifyOtp = async (req, res) => {
-  const User = require('../models/User');
   try {
     const { email, otp } = req.body;
     if (!email || !otp) {
@@ -28,12 +33,9 @@ exports.verifyOtp = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 // Register a new user
 exports.register = async (req, res) => {
-  const User = require('../models/User');
-  const bcrypt = require('bcryptjs');
-  const nodemailer = require('nodemailer');
-
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
@@ -86,11 +88,6 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  const User = require('../models/User');
-  const bcrypt = require('bcryptjs');
-  const nodemailer = require('nodemailer');
-  const jwt = require('jsonwebtoken');
-
   try {
     const { email, password } = req.body;
     if (!email || !password) {
@@ -164,15 +161,16 @@ exports.login = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 // Logout user by clearing cookies
 exports.logout = async (req, res) => {
   res.clearCookie('token');
   res.clearCookie('refreshToken');
   res.status(200).json({ message: 'Logged out successfully.' });
 };
+
 // Get current user info
 exports.getMe = async (req, res) => {
-  const User = require('../models/User');
   try {
     // req.user is set by the protect middleware (from the JWT payload)
     const user = await User.findById(req.user.id).select('-password -otp');
@@ -188,8 +186,6 @@ exports.getMe = async (req, res) => {
 
 // Forgot password
 exports.forgotPassword = async (req, res) => {
-  const User = require('../models/User');
-  const nodemailer = require('nodemailer');
   try {
     const { email } = req.body;
     if (!email) {
@@ -231,8 +227,6 @@ exports.forgotPassword = async (req, res) => {
 
 // Reset password
 exports.resetPassword = async (req, res) => {
-  const User = require('../models/User');
-  const bcrypt = require('bcryptjs');
   try {
     const { email, otp, newPassword } = req.body;
     if (!email || !otp || !newPassword) {
@@ -257,8 +251,6 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
-
-
 
 // Refresh token endpoint
 exports.refreshToken = async (req, res) => {
