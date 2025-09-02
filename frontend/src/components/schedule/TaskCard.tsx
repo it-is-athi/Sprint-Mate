@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { Clock, Calendar, CheckCircle, Circle, Play, Pause } from 'lucide-react';
+import { Clock, Calendar, CheckCircle, Circle, Play, Pause, Edit, Trash2 } from 'lucide-react';
 import { Task } from '../../types';
 
 interface TaskCardProps {
   task: Task;
   onStatusChange?: (taskId: string, status: Task['status']) => void;
+  onEdit?: (task: Task) => void;
+  onDelete?: (taskId: string) => void;
 }
 
-const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange }) => {
+const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange, onEdit, onDelete }) => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [showActions, setShowActions] = useState(false);
 
   const getStatusIcon = () => {
     switch (task.status) {
@@ -65,12 +68,21 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange }) => {
   };
 
   return (
-    <div className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${getStatusColor()}`}>
+    <div 
+      className={`border rounded-lg p-4 transition-all duration-200 hover:shadow-md ${getStatusColor()}`}
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => setShowActions(false)}
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-3 mb-2">
             {getStatusIcon()}
             <h3 className="font-semibold text-gray-900">{task.topic}</h3>
+            {task.missed && (
+              <span className="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">
+                Missed
+              </span>
+            )}
           </div>
           
           <p className="text-gray-600 text-sm mb-3">{task.description}</p>
@@ -90,7 +102,31 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, onStatusChange }) => {
           </div>
         </div>
         
-        <div className="flex items-center space-x-2 ml-4">
+        <div className="flex items-center space-x-2 ml-4 min-h-[32px]">
+          {/* Action buttons that appear on hover */}
+          {showActions && (onEdit || onDelete) && (
+            <div className="flex items-center space-x-1 mr-2">
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(task)}
+                  className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                  title="Edit task"
+                >
+                  <Edit className="w-4 h-4" />
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  onClick={() => onDelete(task._id)}
+                  className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                  title="Delete task"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          )}
+          
           {task.status === 'pending' && (
             <button
               onClick={() => handleStatusChange('in-progress')}

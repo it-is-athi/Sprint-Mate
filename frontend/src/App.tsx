@@ -8,10 +8,13 @@ import ForgotPasswordForm from './components/auth/ForgotPasswordForm';
 import ResetPasswordForm from './components/auth/ResetPasswordForm';
 import ChatInterface from './components/chat/ChatInterface';
 import ScheduleView from './components/schedule/ScheduleView';
+import ProgressDashboard from './components/progress/ProgressDashboard';
+import ProfileSettings from './components/profile/ProfileSettings';
+import Dashboard from './components/dashboard/Dashboard';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
 type AuthView = 'login' | 'register' | 'otp' | 'forgot' | 'reset';
-type AppTab = 'chat' | 'schedule';
+type AppTab = 'dashboard' | 'chat' | 'schedule' | 'progress' | 'profile';
 
 const AuthFlow: React.FC = () => {
   const [currentView, setCurrentView] = useState<AuthView>('login');
@@ -82,24 +85,29 @@ const AuthFlow: React.FC = () => {
 };
 
 const MainApp: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<AppTab>('chat');
+  const [activeTab, setActiveTab] = useState<AppTab>('dashboard');
 
   return (
     <Layout activeTab={activeTab} onTabChange={setActiveTab}>
-      {activeTab === 'chat' ? <ChatInterface /> : <ScheduleView />}
+      {activeTab === 'dashboard' && <Dashboard onTabChange={setActiveTab} />}
+      {activeTab === 'chat' && <ChatInterface />}
+      {activeTab === 'schedule' && <ScheduleView />}
+      {activeTab === 'progress' && <ProgressDashboard />}
+      {activeTab === 'profile' && <ProfileSettings />}
     </Layout>
   );
 };
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
-
+  const [activeTab, setActiveTab] = useState<AppTab>('dashboard');
   if (loading) {
     return <LoadingSpinner />;
   }
 
   return user ? <MainApp /> : <AuthFlow />;
 };
+      {activeTab === 'dashboard' && <Dashboard onTabChange={setActiveTab} />}
 
 function App() {
   return (

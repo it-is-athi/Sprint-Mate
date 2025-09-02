@@ -1,112 +1,182 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, CheckCircle, Circle, AlertCircle, Plus, Filter } from 'lucide-react';
+import { Calendar, Clock, CheckCircle, Circle, AlertCircle, Plus, Filter, RefreshCw, Edit, Trash2 } from 'lucide-react';
 import { Schedule, Task } from '../../types';
 import TaskCard from './TaskCard';
 import ScheduleCard from './ScheduleCard';
+import CreateScheduleModal from './CreateScheduleModal';
+import TaskModal from './TaskModal';
+import { scheduleAPI } from '../../services/scheduleAPI';
 
 const ScheduleView: React.FC = () => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedSchedule, setSelectedSchedule] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed' | 'in-progress'>('all');
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [showCreateSchedule, setShowCreateSchedule] = useState(false);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | undefined>();
 
-  // Mock data for demonstration - replace with actual API calls
-  useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      const mockSchedules: Schedule[] = [
-        {
-          _id: '1',
-          schedule_title: 'Machine Learning Fundamentals',
-          starting_date: '2025-01-01',
-          end_date: '2025-01-31',
-          status: 'active',
-          owner_id: 'user1',
-          description: 'Complete introduction to machine learning concepts and practical applications',
-          repeat_pattern: 'daily',
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-01T00:00:00Z',
-        },
-        {
-          _id: '2',
-          schedule_title: 'React Development Bootcamp',
-          starting_date: '2025-01-15',
-          end_date: '2025-02-15',
-          status: 'active',
-          owner_id: 'user1',
-          description: 'Master React development from basics to advanced concepts',
-          repeat_pattern: 'daily',
-          createdAt: '2025-01-15T00:00:00Z',
-          updatedAt: '2025-01-15T00:00:00Z',
-        },
-      ];
+  const fetchData = async (showLoader = false) => {
+    if (showLoader) setLoading(true);
+    try {
+      const [schedulesRes, tasksRes] = await Promise.all([
+        scheduleAPI.getSchedules(),
+        scheduleAPI.getTasks()
+      ]);
+      
+      setSchedules(schedulesRes.data);
+      setTasks(tasksRes.data);
+      
+      if (schedulesRes.data.length > 0 && !selectedSchedule) {
+        setSelectedSchedule(schedulesRes.data[0]._id);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+      // Keep existing mock data for demonstration
+      if (schedules.length === 0) {
+        const mockSchedules: Schedule[] = [
+          {
+            _id: '1',
+            schedule_title: 'Machine Learning Fundamentals',
+            starting_date: '2025-01-01',
+            end_date: '2025-01-31',
+            status: 'active',
+            owner_id: 'user1',
+            description: 'Complete introduction to machine learning concepts and practical applications',
+            repeat_pattern: 'daily',
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: '2025-01-01T00:00:00Z',
+          },
+          {
+            _id: '2',
+            schedule_title: 'React Development Bootcamp',
+            starting_date: '2025-01-15',
+            end_date: '2025-02-15',
+            status: 'active',
+            owner_id: 'user1',
+            description: 'Master React development from basics to advanced concepts',
+            repeat_pattern: 'daily',
+            createdAt: '2025-01-15T00:00:00Z',
+            updatedAt: '2025-01-15T00:00:00Z',
+          },
+        ];
 
-      const mockTasks: Task[] = [
-        {
-          _id: '1',
-          name: 'ML Fundamentals',
-          topic: 'Introduction to Machine Learning',
-          duration: 120,
-          starting_time: '09:00',
-          date: '2025-01-20',
-          description: 'Learn the basics of ML, types of learning, and common algorithms',
-          status: 'completed',
-          missed: false,
-          schedule_id: '1',
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-20T00:00:00Z',
-        },
-        {
-          _id: '2',
-          name: 'ML Fundamentals',
-          topic: 'Linear Regression and Classification',
-          duration: 90,
-          starting_time: '10:00',
-          date: '2025-01-21',
-          description: 'Deep dive into linear regression and basic classification techniques',
-          status: 'in-progress',
-          missed: false,
-          schedule_id: '1',
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-21T00:00:00Z',
-        },
-        {
-          _id: '3',
-          name: 'ML Fundamentals',
-          topic: 'Neural Networks Basics',
-          duration: 150,
-          starting_time: '09:30',
-          date: '2025-01-22',
-          description: 'Understanding neural networks, perceptrons, and backpropagation',
-          status: 'pending',
-          missed: false,
-          schedule_id: '1',
-          createdAt: '2025-01-01T00:00:00Z',
-          updatedAt: '2025-01-01T00:00:00Z',
-        },
-        {
-          _id: '4',
-          name: 'React Development',
-          topic: 'JSX and Components',
-          duration: 120,
-          starting_time: '14:00',
-          date: '2025-01-21',
-          description: 'Learn JSX syntax and how to create reusable React components',
-          status: 'pending',
-          missed: false,
-          schedule_id: '2',
-          createdAt: '2025-01-15T00:00:00Z',
-          updatedAt: '2025-01-15T00:00:00Z',
-        },
-      ];
+        const mockTasks: Task[] = [
+          {
+            _id: '1',
+            name: 'ML Fundamentals',
+            topic: 'Introduction to Machine Learning',
+            duration: 120,
+            starting_time: '09:00',
+            date: '2025-01-20',
+            description: 'Learn the basics of ML, types of learning, and common algorithms',
+            status: 'completed',
+            missed: false,
+            schedule_id: '1',
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: '2025-01-20T00:00:00Z',
+          },
+          {
+            _id: '2',
+            name: 'ML Fundamentals',
+            topic: 'Linear Regression and Classification',
+            duration: 90,
+            starting_time: '10:00',
+            date: '2025-01-21',
+            description: 'Deep dive into linear regression and basic classification techniques',
+            status: 'in-progress',
+            missed: false,
+            schedule_id: '1',
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: '2025-01-21T00:00:00Z',
+          },
+          {
+            _id: '3',
+            name: 'ML Fundamentals',
+            topic: 'Neural Networks Basics',
+            duration: 150,
+            starting_time: '09:30',
+            date: '2025-01-22',
+            description: 'Understanding neural networks, perceptrons, and backpropagation',
+            status: 'pending',
+            missed: false,
+            schedule_id: '1',
+            createdAt: '2025-01-01T00:00:00Z',
+            updatedAt: '2025-01-01T00:00:00Z',
+          },
+          {
+            _id: '4',
+            name: 'React Development',
+            topic: 'JSX and Components',
+            duration: 120,
+            starting_time: '14:00',
+            date: '2025-01-21',
+            description: 'Learn JSX syntax and how to create reusable React components',
+            status: 'pending',
+            missed: false,
+            schedule_id: '2',
+            createdAt: '2025-01-15T00:00:00Z',
+            updatedAt: '2025-01-15T00:00:00Z',
+          },
+        ];
 
-      setSchedules(mockSchedules);
-      setTasks(mockTasks);
-      setSelectedSchedule(mockSchedules[0]._id);
+        setSchedules(mockSchedules);
+        setTasks(mockTasks);
+        if (!selectedSchedule) setSelectedSchedule(mockSchedules[0]._id);
+      }
+    } finally {
       setLoading(false);
-    }, 1000);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(true);
   }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchData();
+  };
+
+  const handleTaskStatusChange = async (taskId: string, status: Task['status']) => {
+    try {
+      await scheduleAPI.updateTaskStatus(taskId, status);
+      setTasks(prev => prev.map(task => 
+        task._id === taskId ? { ...task, status } : task
+      ));
+    } catch (error) {
+      console.error('Failed to update task status:', error);
+    }
+  };
+
+  const handleEditTask = (task: Task) => {
+    setEditingTask(task);
+    setShowTaskModal(true);
+  };
+
+  const handleDeleteTask = async (taskId: string) => {
+    if (window.confirm('Are you sure you want to delete this task?')) {
+      try {
+        await scheduleAPI.deleteTask(taskId);
+        setTasks(prev => prev.filter(task => task._id !== taskId));
+      } catch (error) {
+        console.error('Failed to delete task:', error);
+      }
+    }
+  };
+
+  const handleTaskSaved = () => {
+    fetchData();
+    setEditingTask(undefined);
+  };
+
+  const handleCreateTask = () => {
+    setEditingTask(undefined);
+    setShowTaskModal(true);
+  };
 
   const filteredTasks = tasks.filter(task => {
     const matchesSchedule = !selectedSchedule || task.schedule_id === selectedSchedule;
@@ -168,6 +238,23 @@ const ScheduleView: React.FC = () => {
         </div>
         
         <div className="flex items-center space-x-4">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="flex items-center space-x-2 btn-secondary disabled:opacity-50"
+          >
+            <RefreshCw className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>Refresh</span>
+          </button>
+          
+          <button
+            onClick={() => setShowCreateSchedule(true)}
+            className="flex items-center space-x-2 btn-primary"
+          >
+            <Plus className="w-4 h-4" />
+            <span>New Schedule</span>
+          </button>
+          
           <select
             value={selectedSchedule || ''}
             onChange={(e) => setSelectedSchedule(e.target.value)}
@@ -190,6 +277,7 @@ const ScheduleView: React.FC = () => {
             >
               <option value="all">All Tasks</option>
               <option value="pending">Pending</option>
+              <option value="in-progress">In Progress</option>
               <option value="completed">Completed</option>
             </select>
           </div>
@@ -250,9 +338,20 @@ const ScheduleView: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-900">
             {selectedScheduleData ? `${selectedScheduleData.schedule_title} Tasks` : 'All Tasks'}
           </h2>
-          <span className="text-sm text-gray-500">
-            {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
-          </span>
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-500">
+              {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
+            </span>
+            {selectedSchedule && (
+              <button
+                onClick={handleCreateTask}
+                className="flex items-center space-x-2 text-sm btn-primary"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Task</span>
+              </button>
+            )}
+          </div>
         </div>
         
         {filteredTasks.length === 0 ? (
@@ -262,41 +361,43 @@ const ScheduleView: React.FC = () => {
           </div>
         ) : (
           <div className="grid gap-4">
-            {filteredTasks.map(task => (
-              <TaskCard key={task._id} task={task} />
-            ))}
+            {filteredTasks
+              .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+              .map(task => (
+                <TaskCard 
+                  key={task._id} 
+                  task={task} 
+                  onStatusChange={handleTaskStatusChange}
+                  onEdit={handleEditTask}
+                  onDelete={handleDeleteTask}
+                />
+              ))}
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <CreateScheduleModal
+        isOpen={showCreateSchedule}
+        onClose={() => setShowCreateSchedule(false)}
+        onScheduleCreated={() => {
+          fetchData();
+          setShowCreateSchedule(false);
+        }}
+      />
+
+      <TaskModal
+        isOpen={showTaskModal}
+        onClose={() => {
+          setShowTaskModal(false);
+          setEditingTask(undefined);
+        }}
+        task={editingTask}
+        scheduleId={selectedSchedule || undefined}
+        onTaskSaved={handleTaskSaved}
+      />
     </div>
   );
 };
 
-const AppContent: React.FC = () => {
-  const { user, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState<AppTab>('chat');
-
-  if (loading) {
-    return <LoadingSpinner />;
-  }
-
-  if (!user) {
-    return <AuthFlow />;
-  }
-
-  return (
-    <Layout activeTab={activeTab} onTabChange={setActiveTab}>
-      {activeTab === 'chat' ? <ChatInterface /> : <ScheduleView />}
-    </Layout>
-  );
-};
-
-function App() {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  );
-}
-
-export default App;
+export default ScheduleView;
