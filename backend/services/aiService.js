@@ -34,11 +34,12 @@ CRITICAL DATE RULES:
 6. End date must be AFTER start date.
 
 CURRENT DATE CONTEXT: Today is ${new Date().toISOString().split('T')[0]} (YYYY-MM-DD format).
-
-Your job is to think creatively and break down the subject or plan into unique daily tasks, portions, or topics, based on the user's input. 
-For example, if the user asks for a 1-month ML plan, generate 30 unique ML topics and assign each to a different day. Do not repeat the same topic. 
-If the subject is unfamiliar, research and break it down into logical learning steps. 
-Always ensure each task is unique and relevant to the subject and duration.
+YOUR JOB:
+- Dynamically research or infer the subject.
+- Break it into **unique learning topics for each day** (no repetition).
+- Example: If user asks for a 30-day Python plan → Task1: variables, Task2: operators, Task3: control flow, … etc.
+- Always generate the correct number of tasks (days = duration).
+- Each day’s task must be **specific and progressive** in difficulty.
 
 RESPONSE STYLE:
 - Be CONCISE and DIRECT
@@ -47,11 +48,13 @@ RESPONSE STYLE:
 - Get straight to the point
 - Use simple, clear language
 
-If the user's input is missing any required schedule attributes (such as ending date, repeat pattern, or start time), ask for the missing information in a SHORT, friendly way. Be direct and specific about what you need.
+If the user's input is missing any required schedule attributes (such as ending date, repeat pattern, or start time), ask for the missing information in a SHORT, friendly way. 
+Be direct and specific about what you need.
 
-Do not include any extra text outside the JSON object unless you are asking for missing information. When asking for missing info, respond ONLY with a short, direct question, and do NOT include any JSON.
+Do not include any extra text outside the JSON object unless you are asking for missing information. 
+When asking for missing info, respond ONLY with a short, direct question, and do NOT include any JSON.
 `;
-// ONLY THE FIXED askMentor FUNCTION - Replace the existing function in aiService.js
+
 
 async function askMentor({ message, context }) {
   // Get environment variables inside the function

@@ -56,64 +56,6 @@ function parseTimeToHHMM(timeStr) {
   return null;
 }
 
-// chat route for general chat
-async function chat(req, res) {
-    try {
-      const { message } = req.body;
-      const userId = req.user.id; // ✅ Extract from token (set by protect middleware)
-  
-      if (!message) {
-        return res.status(400).json({ error: 'message is required' });
-      }
-  
-      // Fetch recent conversation context
-      const recent = await Conversation.find({ userId })
-        .sort({ createdAt: -1 })
-        .limit(CONTEXT_TURNS);
-  
-      const context = recent.reverse().map(turn => `${turn.role.toUpperCase()}: ${turn.message}`);
-  
-      // Get AI reply
-      const reply = await askMentor({ message, context });
-  
-      // Save user message
-      await Conversation.create({ userId, role: 'user', message });
-      // Save assistant reply
-      await Conversation.create({ userId, role: 'assistant', message: reply });
-  
-      res.json({ reply });
-    } catch (e) {
-      console.error('chat error:', e);
-      res.status(500).json({ error: 'chat failed' });
-    }
-}
-
-// create schedule route
-async function createSchedule(req, res) {
-  try {
-    const userId = req.user.id;
-    const { message } = req.body;
-
-    if (!message || !message.trim()) {
-      return res.status(400).json({ error: 'Message is required' });
-    }
-
-    // Check if user has a pending schedule
-    const pendingSchedule = tempSchedules.get(userId);
-    
-    if (pendingSchedule) {
-      // User is providing missing details
-      return await handleMissingDetails(req, res, userId, message, pendingSchedule);
-    }
-
-    // New schedule request
-    return await handleNewSchedule(req, res, userId, message);
-  } catch (e) {
-    console.error('createSchedule error:', e);
-    res.status(500).json({ error: 'Failed to create schedule' });
-  }
-}
-
 // Helper function to parse natural language dates
 function parseNaturalDate(dateStr, referenceDate = new Date()) {
   if (!dateStr) return null;
@@ -172,6 +114,46 @@ function parseNaturalDate(dateStr, referenceDate = new Date()) {
     console.error('Date parsing error:', error);
     return null;
   }
+}
+
+// Fallback function to generate basic tasks when AI fails
+function generateBasicTasks(scheduleResult) {
+  const tasks = [];
+  const startDate = new Date(scheduleResult.startDate);
+  const endDate = new Date(scheduleResult.endDate);
+  const repeatPattern = scheduleResult.repeatPattern;
+  
+  let currentDate = new Date(startDate);
+  let sessionCounter = 1;
+  
+  while (currentDate <= endDate) {
+    tasks.push({
+      name: `Session ${sessionCounter}: Study ${scheduleResult.title}`,
+      topic: scheduleResult.title,
+      duration: scheduleResult.dailyDuration,
+      starting_time: scheduleResult.startingTime,
+      date: currentDate.toISOString().split('T')[0],
+      description: `Study session ${sessionCounter} for ${scheduleResult.title}`
+    });
+    
+    // Move to next occurrence based on repeat pattern
+    switch (repeatPattern) {
+      case 'daily':
+        currentDate.setDate(currentDate.getDate() + 1);
+        break;
+      case 'weekly':
+        currentDate.setDate(currentDate.getDate() + 7);
+        break;
+      case 'monthly':
+        currentDate.setMonth(currentDate.getMonth() + 1);
+        break;
+      default:
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    sessionCounter++;
+  }
+  
+  return tasks;
 }
 
 // Enhanced function to extract schedule details from natural language
@@ -393,6 +375,29 @@ function extractScheduleManually(message, existingDetails = {}) {
     }
   }
   
+    // ⏱️ NEW: Handle "from X to Y" style time ranges → auto set start + duration
+  if (!result.startingTime || !result.dailyDuration) {
+    const rangeMatch = message.match(/from\s+(\d{1,2}(?::\d{2})?)\s*(am|pm)?\s*(?:to|-)\s*(\d{1,2}(?::\d{2})?)\s*(am|pm)?/i);
+    if (rangeMatch) {
+      const startRaw = (rangeMatch[1] + (rangeMatch[2] || '')).trim();
+      const endRaw = (rangeMatch[3] + (rangeMatch[4] || '')).trim();
+      const startHHMM = parseTimeToHHMM(startRaw);
+      const endHHMM = parseTimeToHHMM(endRaw);
+      if (startHHMM && endHHMM) {
+        result.startingTime = startHHMM;
+        const [sh, sm] = startHHMM.split(':').map(Number);
+        const [eh, em] = endHHMM.split(':').map(Number);
+        const startMin = sh * 60 + sm;
+        const endMin = eh * 60 + em;
+        if (endMin > startMin) {
+          result.dailyDuration = endMin - startMin;
+          console.log(`Extracted range: ${startRaw} → ${endRaw} | Start: ${startHHMM}, Duration: ${result.dailyDuration} mins`);
+        }
+      }
+    }
+  }
+
+
   // Extract date references (keep existing working code)
   if (!result.startDate) {
     if (messageLower.includes('tomorrow')) {
@@ -426,6 +431,7 @@ function extractScheduleManually(message, existingDetails = {}) {
   if (/\bdaily\b/i.test(messageLower)) result.repeatPattern = 'daily';
   else if (/\bweekly\b/i.test(messageLower)) result.repeatPattern = 'weekly';
   else if (/\bmonthly\b/i.test(messageLower)) result.repeatPattern = 'monthly';
+  else result.repeatPattern = 'once'; // 🆕 default to once
 }
   
   // Clean up invalid titles
@@ -526,6 +532,23 @@ function validateScheduleDetails(result) {
     }
   }
   
+  // Default handling for one-off schedules
+  if (!result.repeatPattern) {
+    result.repeatPattern = 'once';
+    console.log('Default repeatPattern set to "once"');
+  }
+  if (result.repeatPattern === 'once') {
+    
+    // For one-off, endDate is optional → auto-set equal to startDate
+    if (!result.endDate && result.startDate) {
+      result.endDate = result.startDate;
+      console.log('Auto-set endDate = startDate for one-off schedule');
+    }
+    // Remove endDate missing warning
+    const endDateIdx = missing.indexOf('duration or ending date');
+    if (endDateIdx !== -1) missing.splice(endDateIdx, 1);
+  }
+
   // Duration validation
   if (result.dailyDuration && (result.dailyDuration < 1 || result.dailyDuration > 480)) {
     errors.push('Daily duration must be between 1 and 480 minutes');
@@ -536,6 +559,66 @@ function validateScheduleDetails(result) {
   return { missing, errors };
 }
 
+// Resolve scheduling conflicts and suggest alternatives
+async function checkConflictsAndSuggest(task, userId) {
+  const userTasks = await Task.find({ owner_id: userId, date: task.date });
+
+  const [h, m] = task.starting_time.split(':').map(Number);
+  const taskStart = h * 60 + m;
+  const taskEnd = taskStart + task.duration;
+
+  // detect overlap
+  const overlaps = userTasks.some(existing => {
+    const [exH, exM] = existing.starting_time.split(':').map(Number);
+    const existingStart = exH * 60 + exM;
+    const existingEnd = existingStart + existing.duration;
+    return !(taskEnd <= existingStart || taskStart >= existingEnd);
+  });
+
+  if (!overlaps) return { ok: true };
+
+  // --- suggest alternatives ---
+  const possibleSlots = [];
+
+  // get today's date in "YYYY-MM-DD" format
+  const today = new Date().toISOString().split('T')[0];
+  const isToday = task.date === today;
+
+  // current time in minutes since midnight
+  const now = new Date();
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  for (let min = 0; min <= 24 * 60 - task.duration; min += 15) {
+    // ⏳ skip past times if task is for today
+    if (isToday && min < currentMinutes) continue;
+
+    const slotStart = min;
+    const slotEnd = slotStart + task.duration;
+
+    const conflictHere = userTasks.some(existing => {
+      const [exH, exM] = existing.starting_time.split(':').map(Number);
+      const existingStart = exH * 60 + exM;
+      const existingEnd = existingStart + existing.duration;
+      return !(slotEnd <= existingStart || slotStart >= existingEnd);
+    });
+
+    if (!conflictHere) {
+      const hh = Math.floor(slotStart / 60).toString().padStart(2, '0');
+      const mm = (slotStart % 60).toString().padStart(2, '0');
+      possibleSlots.push({ time: `${hh}:${mm}`, diff: Math.abs(slotStart - taskStart) });
+    }
+  }
+
+  // sort slots by proximity to requested time
+  possibleSlots.sort((a, b) => a.diff - b.diff);
+
+  // limit to top 5 closest slots
+  const suggestions = possibleSlots.slice(0, 5).map(s => s.time);
+
+  return { ok: false, suggestions };
+}
+
+// New function to create final schedule and tasks
 async function handleNewSchedule(req, res, userId, message) {
   try {
     // Extract initial result from the message using enhanced NLP
@@ -606,10 +689,51 @@ async function handleNewSchedule(req, res, userId, message) {
   }
 }
 
+// Finalize and save the schedule and tasks 
 async function handleMissingDetails(req, res, userId, message, pendingSchedule) {
   try {
     // Add current message to conversation history
     pendingSchedule.conversationHistory.push({ role: 'user', message: message });
+    
+    // 🔹 Step 3: Handle conflict resolution first
+    if (pendingSchedule.conflicts && pendingSchedule.conflicts.length > 0) {
+      const newTime = parseTimeToHHMM(message); // e.g. "9:45" → "09:45"
+      if (!newTime) {
+        const msg = "I couldn’t understand that time. Please provide in HH:MM (like 09:45 or 14:00).";
+        await Conversation.create({ userId, role: 'assistant', message: msg });
+        return res.status(400).json({ error: msg });
+      }
+
+      // Take the first conflicted task for now
+      const conflictedTask = pendingSchedule.tasksToCreate.find(
+        t => t.starting_time === pendingSchedule.conflicts[0].originalTime
+      );
+
+      conflictedTask.starting_time = newTime;
+
+      // re-check conflict
+      const conflictCheck = await checkConflictsAndSuggest(conflictedTask, userId);
+
+      if (conflictCheck.ok) {
+        // ✅ No more conflicts → save schedule
+        tempSchedules.delete(userId);
+        await Task.insertMany(pendingSchedule.tasksToCreate);
+        const msg = `✅ Great! I rescheduled to ${newTime}. Your "${pendingSchedule.title}" plan is saved.`;
+        await Conversation.create({ userId, role: 'assistant', message: msg });
+        return res.json({ success: msg });
+      } else {
+        // ⏰ Still conflicting → ask again
+        const msg = `⏰ Oops, ${newTime} still overlaps. Try one of these: ${conflictCheck.suggestions.slice(0,5).join(', ')}.`;
+        await Conversation.create({ userId, role: 'assistant', message: msg });
+        pendingSchedule.conflicts = [{
+          taskName: conflictedTask.name,
+          originalTime: newTime,
+          suggestedSlots: conflictCheck.suggestions
+        }];
+        tempSchedules.set(userId, pendingSchedule);
+        return res.status(400).json({ error: msg, conflicts: conflictCheck.suggestions });
+      }
+    }
     
     // Extract additional result from the new message, preserving existing ones
     const updatedResult = await extractScheduleFromMessage(message, pendingSchedule);
@@ -668,8 +792,62 @@ async function handleMissingDetails(req, res, userId, message, pendingSchedule) 
   }
 }
 
+// createFinalSchedule function with improved AI task generation and conflict handling
 async function createFinalSchedule(res, userId, scheduleResult, originalMessage) {
   try {
+        // 🆕 Handle one-off schedules directly (skip AI task generation)
+        if (scheduleResult.repeatPattern === 'once') {
+          const singleTask = {
+            name: `Study Session: ${scheduleResult.title}`,
+            topic: scheduleResult.title,
+            duration: scheduleResult.dailyDuration,
+            starting_time: scheduleResult.startingTime,
+            date: new Date(scheduleResult.startDate),
+            description: `Study ${scheduleResult.title}`,
+          };
+
+          // Create schedule in database
+          const schedule = await Schedule.create({
+            schedule_title: scheduleResult.title,
+            starting_date: new Date(scheduleResult.startDate),
+            end_date: new Date(scheduleResult.startDate), // same day for one-off
+            status: 'active',
+            owner_id: userId,
+            description: scheduleResult.description || `Study plan for ${scheduleResult.title}`,
+            repeat_pattern: scheduleResult.repeatPattern,
+          });
+
+          // Conflict check
+          const conflictCheck = await checkConflictsAndSuggest(singleTask, userId);
+          if (!conflictCheck.ok) {
+            const msg = `⚠️ Your "${singleTask.name}" at ${singleTask.starting_time} overlaps. Try one of these: ${conflictCheck.suggestions.slice(0,5).join(', ')}`;
+            await Conversation.create({ userId, role: 'assistant', message: msg });
+
+            tempSchedules.set(userId, {
+              ...scheduleResult,
+              conflicts: [{ taskName: singleTask.name, originalTime: singleTask.starting_time, suggestedSlots: conflictCheck.suggestions }],
+              tasksToCreate: [singleTask]
+            });
+
+            return res.status(400).json({ error: msg, conflicts: conflictCheck.suggestions });
+          }
+
+          // No conflicts → save
+          singleTask.schedule_id = schedule._id;
+          await Task.create(singleTask);
+
+          await Conversation.create({ userId, role: 'user', message: originalMessage });
+          const successMsg = `✅ One-time schedule "${scheduleResult.title}" created for ${scheduleResult.startDate} at ${scheduleResult.startingTime}.`;
+          await Conversation.create({ userId, role: 'assistant', message: successMsg });
+
+          return res.json({
+            success: true,
+            message: successMsg,
+            schedule,
+            tasksCreated: 1
+          });
+        }
+
     // Create a simpler, more reliable prompt for AI task generation
     const taskGenerationPrompt = `Create study tasks for a ${scheduleResult.title} schedule.
 
@@ -743,8 +921,44 @@ Return only the JSON array of tasks.`;
       schedule_id: schedule._id,
     }));
     
-    // Insert tasks in batch
-    await Task.insertMany(tasksToCreate);
+    // Check for conflicts before inserting
+    const conflictsInfo = [];
+
+    for (const task of tasksToCreate) {
+      const conflictCheck = await checkConflictsAndSuggest(task, userId);
+      if (!conflictCheck.ok) {
+        conflictsInfo.push({
+          taskName: task.name,
+          originalTime: task.starting_time,
+          suggestedSlots: conflictCheck.suggestions
+        });
+      }
+    }
+
+    if (conflictsInfo.length > 0) {
+      let message = '⚠️ Some of your scheduled times overlap with existing sessions.\n\n';
+      conflictsInfo.forEach(c => {
+        message += `• Task "${c.taskName}" at ${c.originalTime} overlaps.\n  Suggested free slots: ${c.suggestedSlots.slice(0,5).join(', ')}\n\n`;
+      });
+      message += 'Please reply with one of the suggested slots or give your own preferred start time. 😊';
+
+      // Save assistant message
+      await Conversation.create({ userId, role: 'assistant', message });
+
+      // 🚨 Store pending schedule until user gives new time
+      tempSchedules.set(userId, {
+        ...scheduleResult,
+        conflicts: conflictsInfo,
+        tasksToCreate
+      });
+
+      return res.status(400).json({ error: message, conflicts: conflictsInfo });
+    }
+
+
+  // No conflicts → proceed
+  await Task.insertMany(tasksToCreate);
+
 
     // Save conversation
     await Conversation.create({ userId, role: 'user', message: originalMessage });
@@ -763,45 +977,63 @@ Return only the JSON array of tasks.`;
     res.status(500).json({ error: 'Failed to create final schedule' });
   }
 }
-
-// Fallback function to generate basic tasks when AI fails
-function generateBasicTasks(scheduleResult) {
-  const tasks = [];
-  const startDate = new Date(scheduleResult.startDate);
-  const endDate = new Date(scheduleResult.endDate);
-  const repeatPattern = scheduleResult.repeatPattern;
+ 
+// chat route for general chat
+async function chat(req, res) {
+    try {
+      const { message } = req.body;
+      const userId = req.user.id; // ✅ Extract from token (set by protect middleware)
   
-  let currentDate = new Date(startDate);
-  let sessionCounter = 1;
+      if (!message) {
+        return res.status(400).json({ error: 'message is required' });
+      }
   
-  while (currentDate <= endDate) {
-    tasks.push({
-      name: `Session ${sessionCounter}: Study ${scheduleResult.title}`,
-      topic: scheduleResult.title,
-      duration: scheduleResult.dailyDuration,
-      starting_time: scheduleResult.startingTime,
-      date: currentDate.toISOString().split('T')[0],
-      description: `Study session ${sessionCounter} for ${scheduleResult.title}`
-    });
-    
-    // Move to next occurrence based on repeat pattern
-    switch (repeatPattern) {
-      case 'daily':
-        currentDate.setDate(currentDate.getDate() + 1);
-        break;
-      case 'weekly':
-        currentDate.setDate(currentDate.getDate() + 7);
-        break;
-      case 'monthly':
-        currentDate.setMonth(currentDate.getMonth() + 1);
-        break;
-      default:
-        currentDate.setDate(currentDate.getDate() + 1);
+      // Fetch recent conversation context
+      const recent = await Conversation.find({ userId })
+        .sort({ createdAt: -1 })
+        .limit(CONTEXT_TURNS);
+  
+      const context = recent.reverse().map(turn => `${turn.role.toUpperCase()}: ${turn.message}`);
+  
+      // Get AI reply
+      const reply = await askMentor({ message, context });
+  
+      // Save user message
+      await Conversation.create({ userId, role: 'user', message });
+      // Save assistant reply
+      await Conversation.create({ userId, role: 'assistant', message: reply });
+  
+      res.json({ reply });
+    } catch (e) {
+      console.error('chat error:', e);
+      res.status(500).json({ error: 'chat failed' });
     }
-    sessionCounter++;
+}
+
+// create schedule route
+async function createSchedule(req, res) {
+  try {
+    const userId = req.user.id;
+    const { message } = req.body;
+
+    if (!message || !message.trim()) {
+      return res.status(400).json({ error: 'Message is required' });
+    }
+
+    // Check if user has a pending schedule
+    const pendingSchedule = tempSchedules.get(userId);
+    
+    if (pendingSchedule) {
+      // User is providing missing details
+      return await handleMissingDetails(req, res, userId, message, pendingSchedule);
+    }
+
+    // New schedule request
+    return await handleNewSchedule(req, res, userId, message);
+  } catch (e) {
+    console.error('createSchedule error:', e);
+    res.status(500).json({ error: 'Failed to create schedule' });
   }
-  
-  return tasks;
 }
 
 module.exports = {
