@@ -2,12 +2,15 @@ const express = require('express');
 const router = express.Router();
 const taskController = require('../controllers/taskController');
 
-// In future add authMiddleware to protect these routes
+// Simple test route
+router.get('/ping', (req, res) => {
+  res.json({ message: "✅ Task routes are working!" });
+});
 
+// CRUD routes
 router.post('/', taskController.createTask);
-router.get('/', taskController.getTasks);
 router.put('/:id', taskController.updateTask);
 router.delete('/:id', taskController.deleteTask);
-router.patch('/:id/toggle', taskController.toggleTaskCompletion);
+router.patch('/:id/toggle', taskController.toggleTaskStatus);
 
 module.exports = router;

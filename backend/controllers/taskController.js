@@ -3,13 +3,16 @@ const Task = require('../models/Task');
 // @desc    Create a new task
 exports.createTask = async (req, res) => {
   try {
-    const { title, description, dueDate } = req.body;
+    const { name, topic, duration, starting_time, date, description, schedule_id } = req.body;
 
     const task = new Task({
-      title,
+      name,
+      topic,
+      duration,
+      starting_time,
+      date,
       description,
-      dueDate,
-      userId: req.user ? req.user.id : '64d1e10b6e9f123456789abc', // use req.user.id after auth, dummy ID for now
+      schedule_id
     });
 
     await task.save();
@@ -42,49 +45,21 @@ exports.deleteTask = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete task', error: error.message });
   }
 };
-// @desc    Get all tasks for the user, with optional filters
-exports.getTasks = async (req, res) => {
-  try {
-    const filters = {
-      userId: req.user ? req.user.id : '64d1e10b6e9f123456789abc'
-    };
 
-    // Optional filter: completed = true/false
-    if (req.query.completed !== undefined) {
-      filters.isCompleted = req.query.completed === 'true';
-    }
-
-    // Optional filter: dueDate = YYYY-MM-DD
-    if (req.query.dueDate) {
-      const date = new Date(req.query.dueDate);
-      // Set time boundaries to include the full day
-      const nextDay = new Date(date);
-      nextDay.setDate(date.getDate() + 1);
-
-      filters.dueDate = {
-        $gte: date,
-        $lt: nextDay
-      };
-    }
-
-    const tasks = await Task.find(filters).sort({ dueDate: 1 });
-
-    res.status(200).json(tasks);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch tasks', error: error.message });
-  }
-};
-
-exports.toggleTaskCompletion = async (req, res) => {
+// @desc    Toggle task status (pending → in-progress → completed)
+exports.toggleTaskStatus = async (req, res) => {
   try {
     const task = await Task.findById(req.params.id);
     if (!task) return res.status(404).json({ message: 'Task not found' });
 
-    task.isCompleted = !task.isCompleted;
-    await task.save();
+    // cycle through statuses
+    if (task.status === "pending") task.status = "in-progress";
+    else if (task.status === "in-progress") task.status = "completed";
+    else task.status = "pending"; // reset back to pending if completed
 
+    await task.save();
     res.status(200).json(task);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to toggle task', error: error.message });
+    res.status(500).json({ message: 'Failed to toggle task status', error: error.message });
   }
 };
