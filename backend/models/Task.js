@@ -10,6 +10,7 @@ const TaskSchema = new mongoose.Schema({
   status: { type: String, enum: ["pending", "in-progress", "completed"], default: "pending" },
   missed: { type: Boolean, default: false },
   schedule_id: { type: mongoose.Schema.Types.ObjectId, ref: "Schedule", required: true },
+  owner_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
 }, { timestamps: true });
 
 module.exports = mongoose.model("Task", TaskSchema);
