@@ -1,117 +1,85 @@
 // backend/services/aiService.js
-const mentorSystemPrompt = `
-When asked to create a study plan, always respond with a JSON object in the following format:
+const axios = require('axios');
 
-{
-  "schedule": {
-    "title": "...",
-    "startDate": "...",
-    "endDate": "...",
-    "ownerId": "...",
-    "description": "...",
-    "repeatPattern": "daily"
-  },
-  "tasks": [
-    {
-      "name": "...", // Give each task with the same schedule name; all tasks belonging to the same schedule have the same name
-      "topic": "...", // All other subtopics that describe the task should be in here separated by "-"
-      "date": "...", // Use a single date in YYYY-MM-DD format for each task. Do NOT use a date range.
-      "duration": ...,
-      "starting_time": "...",
-      "description": "...", // Describe what will be covered uniquely for each day
-      "status": "pending"
-    },
-    ...
-  ]
-}
+// --- Prompt Definitions for Readability ---
 
-CRITICAL DATE RULES:
-1. NEVER use dates before today. NEVER use past dates.
-2. If no start date is specified, use TODAY's date.
-3. If user says "tomorrow", use TOMORROW's date.
-4. If user says "next week", start from next Monday.
-5. Always calculate end date based on duration from start date.
-6. End date must be AFTER start date.
+const JSON_STRUCTURE_GUIDE = `
+  **Schedule JSON Structure:**
+  {
+    "schedule_title": "string",
+    "starting_date": "YYYY-MM-DD",
+    "end_date": "YYYY-MM-DD",
+    "description": "string",
+    "repeat_pattern": "['once', 'daily', 'weekly', 'monthly']",
+    "status": "active"
+  }
 
-CURRENT DATE CONTEXT: Today is ${new Date().toISOString().split('T')[0]} (YYYY-MM-DD format).
-YOUR JOB:
-- Dynamically research or infer the subject.
-- Break it into **unique learning topics for each day** (no repetition).
-- Example: If user asks for a 30-day Python plan → Task1: variables, Task2: operators, Task3: control flow, … etc.
-- Always generate the correct number of tasks (days = duration).
-- Each day’s task must be **specific and progressive** in difficulty.
-
-RESPONSE STYLE:
-- Be CONCISE and DIRECT
-- Keep responses SHORT but COMPLETE
-- Avoid unnecessary explanations
-- Get straight to the point
-- Use simple, clear language
-
-If the user's input is missing any required schedule attributes (such as ending date, repeat pattern, or start time), ask for the missing information in a SHORT, friendly way. 
-Be direct and specific about what you need.
-
-Do not include any extra text outside the JSON object unless you are asking for missing information. 
-When asking for missing info, respond ONLY with a short, direct question, and do NOT include any JSON.
+  **Task JSON Structure (for the tasks_data array) - MUST match exactly:**
+  {
+    "name": "string (required) - e.g., 'Day 1: Variables & Loops'",
+    "topic": "string - Unique portion/topic for the day",
+    "date": "string (required) - YYYY-MM-DD format",
+    "description": "string - Detailed description of what to learn/do",
+    "status": "pending",
+    "missed": false
+  }
 `;
 
+// --- AI Service Functions ---
+/**
+ * Generates a complete schedule and tasks from form data.
+ * @param {object} scheduleData - Complete schedule details from the form.
+ * @returns {Promise<object>} - A JSON object with schedule_data and tasks_data.
+ */
+exports.generateScheduleFromForm = async (scheduleData) => {
+  const systemPrompt = `
+    You are SprintMate, an expert task scheduler and study mentor. You will receive complete schedule details from a form and need to generate appropriate tasks.
 
-async function askMentor({ message, context }) {
-  // Get environment variables inside the function
-  const GROQ_API_URL = process.env.GROQ_API_URL;
-  const GROQ_API_KEY = process.env.GROQ_API_KEY;
-  const GROQ_MODEL = process.env.GROQ_MODEL || 'llama3-8b-8192';
-  
-  console.log('GROQ_API_URL:', GROQ_API_URL);
-  console.log('GROQ_API_KEY:', GROQ_API_KEY ? 'Set' : 'Not set');
-  console.log('GROQ_MODEL:', GROQ_MODEL);
+    **Your Task:**
+    Create a detailed, actionable schedule with tasks. The response MUST be a single JSON object with two keys: "schedule_data" and "tasks_data".
 
-  // Use Groq API only
-  if (GROQ_API_KEY && GROQ_API_URL) {
-    const response = await fetch(GROQ_API_URL, {
-      method: 'POST',
+    **CRITICAL TASK GENERATION RULES:**
+    1. **Use Exact Title:** Use the provided schedule_title exactly as given.
+    2. **Calculate Task Count:** Based on repeat_pattern and date range (starting_date to end_date):
+       - **daily**: Create a task for EACH DAY in the date range
+       - **weekly**: Create a task for EACH WEEK in the date range  
+       - **monthly**: Create a task for EACH MONTH in the date range
+       - **once**: Create only 1 task
+    3. **Task Fields (ALL REQUIRED):**
+       - **name**: Progressive names like "Day 1: Introduction to Basics", "Day 2: Advanced Concepts"
+       - **topic**: Specific learning topic for that session
+       - **date**: Exact date for each task in YYYY-MM-DD format
+       - **description**: Detailed learning objectives for that session
+       - **status**: Always "pending"
+       - **missed**: Always false
+    4. **Research & Progression:** Research the schedule topic and create a logical learning progression.
+
+    **Schedule Details Provided:**
+    ${JSON.stringify(scheduleData, null, 2)}
+
+    **IMPORTANT:** The tasks_data array must contain individual task objects that match the Task schema exactly. Each task must have all required fields.
+
+    ${JSON_STRUCTURE_GUIDE}
+
+    Generate the complete schedule now. Be encouraging and educational in task descriptions.
+  `;
+
+  try {
+    const response = await axios.post(process.env.GROQ_API_URL, {
+      model: process.env.GROQ_MODEL,
+      messages: [{ role: 'system', content: systemPrompt }],
+      temperature: 0.3,
+      response_format: { type: 'json_object' },
+    }, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${GROQ_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: GROQ_MODEL,
-        messages: [
-          { role: 'system', content: mentorSystemPrompt },
-          { role: 'user', content: message }
-        ],
-        temperature: 0.7
-      })
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
     });
 
-    // ✅ ADDED: Better error logging to debug 400 errors
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error('Groq API Error Details:', errorText);
-      throw new Error(`Groq error: ${response.status} - ${errorText}`);
-    }
-    
-    const data = await response.json();
-    return (data.choices && data.choices[0].message.content)
-      ? data.choices[0].message.content.trim()
-      : 'Sorry, I could not respond.';
-  } else {
-    throw new Error('Groq API credentials are not set in .env');
+    return JSON.parse(response.data.choices[0].message.content);
+  } catch (error) {
+    console.error('Error calling Groq API for form-based generation:', error.response ? error.response.data : error.message);
+    throw new Error('Failed to generate schedule from form data.');
   }
-}
-
-function extractPlanDetails(aiResponse, originalMessage) {
-  try {
-    // Find the first JSON object in the response
-    const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error('No JSON found in AI response');
-    const parsed = JSON.parse(jsonMatch[0]);
-    if (!parsed.schedule || !Array.isArray(parsed.tasks)) throw new Error('Invalid format');
-    return [parsed.schedule, parsed.tasks];
-  } catch (err) {
-    console.error('extractPlanDetails error:', err);
-    return [{}, []];
-  }
-}
-
-module.exports = { askMentor, extractPlanDetails };
+};
