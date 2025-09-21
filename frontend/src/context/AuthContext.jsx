@@ -8,19 +8,32 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/auth/me')
-      .then(r => setUser(r.data))
-      .catch(() => setUser(null))
-      .finally(() => setLoading(false));
+    checkAuth();
   }, []);
 
+  const checkAuth = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      setUser(response.data);
+    } catch (error) {
+      console.log('Not authenticated');
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logout = async () => {
-    try { await api.post('/auth/logout'); } catch {}
+    try { 
+      await api.post('/auth/logout'); 
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUser, loading, logout }}>
+    <AuthContext.Provider value={{ user, setUser, loading, logout, checkAuth }}>
       {children}
     </AuthContext.Provider>
   );

@@ -4,9 +4,7 @@ const authController = require('../controllers/authController');
 const { protect } = require('../middlewares/authMiddleware');
 
 // Example of a protected route
-router.get('/me', protect, (req, res) => {
-  res.json({ message: 'This is a protected route', user: req.user });
-});
+router.get('/me', protect, authController.getMe);
 
 // Login route
 router.post('/login', authController.login);

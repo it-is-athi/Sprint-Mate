@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import api from '../api/axios';
 import { Zap, Eye, EyeOff, Lock, Shield, User } from 'lucide-react';
 
@@ -12,6 +13,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
+  const { checkAuth } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,11 +26,13 @@ export default function Login() {
         if (res.data.requiresOtp || /not verified/i.test(res.data.message || '')) {
           setShowOtp(true);
         } else {
+          await checkAuth(); // Refresh user context
           navigate('/dashboard');
         }
       } else {
         // OTP verification request
         await api.post('/auth/verify-otp', { email, otp });
+        await checkAuth(); // Refresh user context
         navigate('/dashboard');
       }
     } catch (err) {

@@ -1,0 +1,1133 @@
+import React, { useState, useContext, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
+import { Zap, LogOut, Calendar, MessageCircle, User, Home, Plus, ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
+import api from '../api/axios';
+
+export default function Dashboard() {
+  const navigate = useNavigate();
+  const { user, logout } = useContext(AuthContext);
+  const [currentPage, setCurrentPage] = useState('home');
+  const [schedules, setSchedules] = useState([]);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [tasks, setTasks] = useState([]);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [todaysTasks, setTodaysTasks] = useState([]);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [taskToReschedule, setTaskToReschedule] = useState(null);
+
+  // Fetch user's schedules on component mount
+  useEffect(() => {
+    fetchSchedules();
+    fetchTodaysTasks();
+  }, []);
+
+  const fetchSchedules = async () => {
+    try {
+      setLoading(true);
+      // We'll need to create this endpoint in backend
+      const response = await api.get('/schedules/user-schedules');
+      setSchedules(response.data);
+    } catch (error) {
+      console.error('Error fetching schedules:', error);
+      setSchedules([]); // Set empty array as fallback
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchTodaysTasks = async () => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const response = await api.get(`/tasks/today?date=${today}`);
+      setTodaysTasks(response.data);
+    } catch (error) {
+      console.error('Error fetching today\'s tasks:', error);
+      setTodaysTasks([]);
+    }
+  };
+
+  const fetchScheduleTasks = async (scheduleId) => {
+    try {
+      setLoading(true);
+      const response = await api.get(`/tasks/schedule/${scheduleId}`);
+      setTasks(response.data);
+    } catch (error) {
+      console.error('Error fetching schedule tasks:', error);
+      setTasks([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateTaskStatus = async (taskId, newStatus) => {
+    try {
+      await api.patch(`/tasks/${taskId}/status`, { status: newStatus });
+      // Refresh today's tasks after update
+      await fetchTodaysTasks();
+      // Refresh schedules to update progress bars
+      await fetchSchedules();
+      // If we're viewing tasks, refresh those too
+      if (selectedSchedule) {
+        await fetchScheduleTasks(selectedSchedule._id);
+      }
+    } catch (error) {
+      console.error('Error updating task status:', error);
+      alert('Failed to update task status. Please try again.');
+    }
+  };
+
+  const rescheduleTask = async (taskId, newDate) => {
+    try {
+      setLoading(true);
+      await api.patch(`/tasks/${taskId}/reschedule`, { newDate });
+      // Refresh tasks after rescheduling
+      await fetchTodaysTasks();
+      if (selectedSchedule) {
+        await fetchScheduleTasks(selectedSchedule._id);
+      }
+      setShowRescheduleModal(false);
+      setTaskToReschedule(null);
+    } catch (error) {
+      console.error('Error rescheduling task:', error);
+      alert('Failed to reschedule task. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRescheduleClick = (task) => {
+    setTaskToReschedule(task);
+    setShowRescheduleModal(true);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
+  };
+
+  const handleScheduleClick = (schedule) => {
+    setSelectedSchedule(schedule);
+    fetchScheduleTasks(schedule._id);
+  };
+
+  const handleBackToSchedules = () => {
+    setSelectedSchedule(null);
+    setTasks([]);
+  };
+
+  const createSchedule = async (scheduleData) => {
+    try {
+      setLoading(true);
+      await api.post('/bot/create-schedule', scheduleData);
+      await fetchSchedules(); // Refresh schedules list
+      setShowCreateForm(false);
+      setCurrentPage('schedules'); // Navigate to schedules page
+    } catch (error) {
+      console.error('Error creating schedule:', error);
+      alert('Error creating schedule. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Sidebar Navigation Items
+  const navigationItems = [
+    { id: 'home', label: 'Home', icon: Home },
+    { id: 'schedules', label: 'Schedules', icon: Calendar },
+    { id: 'chat', label: 'Chat', icon: MessageCircle },
+    { id: 'profile', label: 'Profile', icon: User },
+  ];
+
+  return (
+    <div className="min-h-screen bg-black text-white flex">
+      {/* Sidebar */}
+      <div className="w-64 bg-gradient-to-b from-gray-900 to-black border-r border-yellow-600/30 flex flex-col">
+        {/* Logo */}
+        <div className="p-6 border-b border-yellow-600/30">
+          <div className="flex items-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-xl flex items-center justify-center mr-3">
+              <Zap className="w-6 h-6 text-black" />
+            </div>
+            <span className="text-white text-xl font-bold">SprintMate</span>
+          </div>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 p-4">
+          <ul className="space-y-2">
+            {navigationItems.map((item) => {
+              const Icon = item.icon;
+              return (
+                <li key={item.id}>
+                  <button
+                    onClick={() => setCurrentPage(item.id)}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                      currentPage === item.id
+                        ? 'bg-gradient-to-r from-yellow-600 to-amber-600 text-black font-semibold'
+                        : 'text-gray-300 hover:bg-gray-800 hover:text-yellow-400'
+                    }`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{item.label}</span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </nav>
+
+        {/* User Info & Logout */}
+        <div className="p-4 border-t border-yellow-600/30">
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-full flex items-center justify-center">
+              <User className="w-4 h-4 text-black" />
+            </div>
+            <span className="text-sm text-gray-300">{user?.name || 'User'}</span>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-3 px-4 py-2 rounded-lg text-gray-300 hover:bg-gray-800 hover:text-red-400 transition-all duration-200"
+          >
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col">
+        {/* Top Bar */}
+        <header className="bg-gray-900 border-b border-yellow-600/30 p-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              {/* Back button for schedule tasks view */}
+              {selectedSchedule && (
+                <button
+                  onClick={handleBackToSchedules}
+                  className="flex items-center space-x-2 px-4 py-2 bg-yellow-600 text-black rounded-lg hover:bg-yellow-500 transition-all duration-200"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Back to Schedules</span>
+                </button>
+              )}
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  {currentPage === 'home' && 'Welcome back!'}
+                  {currentPage === 'schedules' && (selectedSchedule ? selectedSchedule.schedule_title : 'My Schedules')}
+                  {currentPage === 'chat' && 'AI Chat Assistant'}
+                  {currentPage === 'profile' && 'Profile Settings'}
+                </h1>
+                <p className="text-gray-400">
+                  {currentPage === 'home' && `Hello ${user?.name || 'User'}! Ready to tackle your goals today?`}
+                  {currentPage === 'schedules' && (selectedSchedule ? 'Manage your tasks' : 'Organize your learning journey')}
+                  {currentPage === 'chat' && 'Get help with scheduling and planning'}
+                  {currentPage === 'profile' && 'Manage your account settings'}
+                </p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Page Content */}
+        <main className="flex-1 p-6 overflow-auto">
+          {currentPage === 'home' && <HomePage todaysTasks={todaysTasks} updateTaskStatus={updateTaskStatus} user={user} />}
+          {currentPage === 'schedules' && !selectedSchedule && (
+            <SchedulesPage 
+              schedules={schedules} 
+              loading={loading}
+              onScheduleClick={handleScheduleClick}
+              onCreateClick={() => setShowCreateForm(true)}
+            />
+          )}
+          {currentPage === 'schedules' && selectedSchedule && (
+            <TasksPage 
+              schedule={selectedSchedule}
+              tasks={tasks}
+              loading={loading}
+              updateTaskStatus={updateTaskStatus}
+              onRescheduleClick={handleRescheduleClick}
+            />
+          )}
+          {currentPage === 'chat' && <ChatPage />}
+          {currentPage === 'profile' && <ProfilePage user={user} />}
+        </main>
+      </div>
+
+      {/* Create Schedule Modal */}
+      {showCreateForm && (
+        <CreateScheduleModal
+          onClose={() => setShowCreateForm(false)}
+          onSubmit={createSchedule}
+          loading={loading}
+        />
+      )}
+
+      {/* Reschedule Modal */}
+      {showRescheduleModal && taskToReschedule && (
+        <RescheduleModal
+          task={taskToReschedule}
+          onClose={() => {
+            setShowRescheduleModal(false);
+            setTaskToReschedule(null);
+          }}
+          onSubmit={rescheduleTask}
+          loading={loading}
+        />
+      )}
+    </div>
+  );
+}
+
+// HomePage Component
+function HomePage({ todaysTasks, updateTaskStatus, user }) {
+  const handleCompleteTask = (taskId) => {
+    updateTaskStatus(taskId, 'completed');
+  };
+
+  const handleStartTask = (taskId) => {
+    updateTaskStatus(taskId, 'in-progress');
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome Card */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-yellow-600 via-amber-600 to-yellow-700 rounded-2xl p-8 text-black shadow-2xl">
+        <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/30 to-amber-800/30"></div>
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-white/20 to-transparent rounded-full -mr-16 -mt-16"></div>
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-white/10 to-transparent rounded-full -ml-12 -mb-12"></div>
+        <div className="relative z-10">
+          <h2 className="text-3xl font-bold mb-2 drop-shadow-sm">Welcome back, {user?.name || 'User'}! 🎉</h2>
+          <p className="text-lg font-medium text-black/80 drop-shadow-sm">Ready to achieve your goals today? Let's make it productive!</p>
+        </div>
+      </div>
+
+      {/* Today's Tasks */}
+      <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-2xl p-6 border border-yellow-600/40 shadow-xl">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-400">
+            Today's Tasks
+          </h3>
+          <div className="px-3 py-1 bg-gradient-to-r from-yellow-600/20 to-amber-600/20 rounded-full border border-yellow-500/30">
+            <span className="text-yellow-400 text-sm font-medium">{todaysTasks.length} tasks</span>
+          </div>
+        </div>
+        
+        {todaysTasks.length > 0 ? (
+          <div className="space-y-4">
+            {todaysTasks.map((task, index) => (
+              <div key={task._id || index} className="group relative bg-gradient-to-r from-black/60 via-gray-900/80 to-black/60 rounded-xl p-6 border border-gray-700/50 hover:border-yellow-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/10">
+                <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/5 via-transparent to-amber-500/5 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                
+                <div className="relative z-10">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-white text-lg mb-1 group-hover:text-yellow-100 transition-colors">{task.name}</h4>
+                      <p className="text-gray-400 text-sm leading-relaxed">{task.description}</p>
+                    </div>
+                    
+                    {/* Task Actions */}
+                    <div className="flex items-center space-x-2 ml-4">
+                      {task.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={() => handleStartTask(task._id)}
+                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-sm font-medium rounded-lg hover:from-blue-500 hover:to-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                          >
+                            Start
+                          </button>
+                          <button
+                            onClick={() => handleCompleteTask(task._id)}
+                            className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white text-sm font-medium rounded-lg hover:from-green-500 hover:to-green-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                          >
+                            Complete
+                          </button>
+                        </>
+                      )}
+                      
+                      {task.status === 'in-progress' && (
+                        <button
+                          onClick={() => handleCompleteTask(task._id)}
+                          className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white text-sm font-medium rounded-lg hover:from-green-500 hover:to-green-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:scale-105"
+                        >
+                          Complete
+                        </button>
+                      )}
+                      
+                      {task.status === 'completed' && (
+                        <div className="flex items-center space-x-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                          <span className="text-green-400 text-sm font-medium">Completed!</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                        task.status === 'completed' 
+                          ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                        task.status === 'in-progress' 
+                          ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                          'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                      }`}>
+                        {task.status === 'in-progress' ? 'In Progress' : task.status}
+                      </span>
+                      
+                      <span className="text-gray-500 text-xs font-medium bg-gray-700/50 px-2 py-1 rounded">
+                        {task.topic}
+                      </span>
+                    </div>
+                    
+                    <span className="text-gray-500 text-xs">
+                      {new Date(task.date).toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12">
+            <div className="w-16 h-16 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-4 border border-yellow-500/30">
+              <Calendar className="w-8 h-8 text-yellow-400" />
+            </div>
+            <h4 className="text-xl font-semibold text-gray-300 mb-2">No tasks for today</h4>
+            <p className="text-gray-500 mb-6">Perfect time to create a new schedule and start your learning journey!</p>
+            <div className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 text-black font-semibold rounded-lg hover:from-yellow-500 hover:to-amber-500 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+              <Plus className="w-4 h-4" />
+              <span>Create Your First Schedule</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Quick Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-gradient-to-br from-green-900/50 to-green-800/30 rounded-xl p-6 border border-green-500/30 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-green-400 text-sm font-medium mb-1">Completed Today</p>
+              <p className="text-2xl font-bold text-white">
+                {todaysTasks.filter(task => task.status === 'completed').length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 bg-green-400 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-br from-yellow-900/50 to-yellow-800/30 rounded-xl p-6 border border-yellow-500/30 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-yellow-400 text-sm font-medium mb-1">In Progress</p>
+              <p className="text-2xl font-bold text-white">
+                {todaysTasks.filter(task => task.status === 'in-progress').length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 bg-yellow-400 rounded-full animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div className="bg-gradient-to-br from-blue-900/50 to-blue-800/30 rounded-xl p-6 border border-blue-500/30 shadow-lg">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-blue-400 text-sm font-medium mb-1">Pending</p>
+              <p className="text-2xl font-bold text-white">
+                {todaysTasks.filter(task => task.status === 'pending').length}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
+              <div className="w-6 h-6 bg-blue-400 rounded-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// SchedulesPage Component  
+function SchedulesPage({ schedules, loading, onScheduleClick, onCreateClick }) {
+  return (
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-amber-400">
+            My Learning Schedules
+          </h2>
+          <p className="text-gray-400 mt-1">Organize and track your educational journey</p>
+        </div>
+        
+        {/* Create Schedule Button */}
+        <button
+          onClick={onCreateClick}
+          className="group flex items-center space-x-3 bg-gradient-to-r from-yellow-600 to-amber-600 text-black px-6 py-3 rounded-xl font-semibold hover:from-yellow-500 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+        >
+          <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+          <span>Create Schedule</span>
+        </button>
+      </div>
+
+      {/* Schedules Grid */}
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="relative">
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-yellow-600/30 border-t-yellow-600"></div>
+            <div className="absolute inset-0 rounded-full h-16 w-16 border-4 border-transparent border-r-amber-500 animate-spin" style={{animationDuration: '1.5s', animationDirection: 'reverse'}}></div>
+          </div>
+        </div>
+      ) : schedules.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {schedules.map((schedule) => (
+            <div
+              key={schedule._id}
+              onClick={() => onScheduleClick(schedule)}
+              className="group relative bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-2xl p-6 border border-yellow-600/30 hover:border-yellow-400/70 cursor-pointer transition-all duration-300 hover:shadow-2xl hover:shadow-yellow-500/20 transform hover:scale-105"
+            >
+              {/* Background Gradient Effect */}
+              <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 via-transparent to-amber-500/10 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              
+              {/* Decorative Elements */}
+              <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-yellow-400/10 to-transparent rounded-full -mr-10 -mt-10 group-hover:scale-150 transition-transform duration-500"></div>
+              
+              <div className="relative z-10">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-white mb-2 group-hover:text-yellow-100 transition-colors">{schedule.schedule_title}</h3>
+                    <p className="text-gray-400 text-sm leading-relaxed line-clamp-2">{schedule.description}</p>
+                  </div>
+                  
+                  {/* Status Indicator */}
+                  <div className={`px-3 py-1 rounded-full text-xs font-medium border ${
+                    schedule.status === 'active' 
+                      ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                    schedule.status === 'completed' 
+                      ? 'bg-blue-500/20 text-blue-400 border-blue-500/30' :
+                      'bg-gray-500/20 text-gray-400 border-gray-500/30'
+                  }`}>
+                    {schedule.status}
+                  </div>
+                </div>
+                
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="w-4 h-4 text-yellow-400" />
+                    <span className="text-gray-500 text-sm font-medium capitalize">{schedule.repeat_pattern}</span>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 text-gray-500 text-xs">
+                    <span>Click to view tasks</span>
+                    <ArrowLeft className="w-3 h-3 rotate-180 group-hover:translate-x-1 transition-transform" />
+                  </div>
+                </div>
+                
+                {/* Progress Bar */}
+                <div className="mt-4 bg-gray-700/50 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-yellow-500 to-amber-500 rounded-full transition-all duration-500"
+                    style={{ width: `${schedule.progress?.percentage || 0}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-16">
+          <div className="w-24 h-24 bg-gradient-to-br from-yellow-500/20 to-amber-500/20 rounded-full flex items-center justify-center mx-auto mb-6 border border-yellow-500/30">
+            <Calendar className="w-12 h-12 text-yellow-400" />
+          </div>
+          <h3 className="text-2xl font-bold text-gray-300 mb-3">No schedules yet</h3>
+          <p className="text-gray-500 mb-8 max-w-md mx-auto">Start your learning journey by creating your first schedule. Our AI will help you break down your goals into manageable daily tasks.</p>
+          <button
+            onClick={onCreateClick}
+            className="inline-flex items-center space-x-3 bg-gradient-to-r from-yellow-600 to-amber-600 text-black px-8 py-4 rounded-xl font-bold hover:from-yellow-500 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105"
+          >
+            <Plus className="w-5 h-5" />
+            <span>Create Your First Schedule</span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// MiniCalendar Component - Rubik's Cube Size! 🎲
+function MiniCalendar({ selectedDate, onDateSelect, minDate = null, label = "Select Date" }) {
+  const [currentMonth, setCurrentMonth] = useState(selectedDate ? new Date(selectedDate) : new Date());
+  const [isOpen, setIsOpen] = useState(false);
+
+  const today = new Date();
+  const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  const lastDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0);
+  const firstDayOfWeek = firstDayOfMonth.getDay();
+  const daysInMonth = lastDayOfMonth.getDate();
+
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const dayNames = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
+
+  const navigateMonth = (direction) => {
+    setCurrentMonth(prev => {
+      const newMonth = new Date(prev);
+      newMonth.setMonth(prev.getMonth() + direction);
+      return newMonth;
+    });
+  };
+
+  const handleDateClick = (day) => {
+    const selected = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    const selectedDateString = selected.toISOString().split('T')[0];
+    
+    // Check if date is disabled
+    if (minDate && selected < new Date(minDate)) return;
+    
+    onDateSelect(selectedDateString);
+    setIsOpen(false);
+  };
+
+  const isDateDisabled = (day) => {
+    if (!minDate) return false;
+    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    return date < new Date(minDate);
+  };
+
+  const isSelectedDate = (day) => {
+    if (!selectedDate) return false;
+    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    return date.toISOString().split('T')[0] === selectedDate;
+  };
+
+  const isToday = (day) => {
+    const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day);
+    return date.toDateString() === today.toDateString();
+  };
+
+  // Generate calendar days
+  const calendarDays = [];
+  
+  // Empty cells for days before month starts
+  for (let i = 0; i < firstDayOfWeek; i++) {
+    calendarDays.push(null);
+  }
+  
+  // Days of the month
+  for (let day = 1; day <= daysInMonth; day++) {
+    calendarDays.push(day);
+  }
+
+  return (
+    <div className="relative">
+      <label className="block text-sm font-medium text-gray-300 mb-2">{label} *</label>
+      
+      {/* Date Display Button */}
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg text-white focus:border-yellow-400 focus:outline-none hover:border-yellow-500 transition-colors flex items-center justify-between"
+      >
+        <span>{selectedDate ? new Date(selectedDate).toLocaleDateString() : "Choose date..."}</span>
+        <Calendar className="w-4 h-4 text-gray-400" />
+      </button>
+
+      {/* Mini Calendar Popup - Rubik's Cube Size! */}
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-1 z-50 bg-gray-900 border border-yellow-600/30 rounded-lg p-3 shadow-xl" style={{width: '240px'}}>
+          
+          {/* Month Navigation */}
+          <div className="flex items-center justify-between mb-3">
+            <button
+              type="button"
+              onClick={() => navigateMonth(-1)}
+              className="p-1 hover:bg-gray-800 rounded transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4 text-gray-400" />
+            </button>
+            <h3 className="text-white font-medium text-sm">
+              {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+            </h3>
+            <button
+              type="button"
+              onClick={() => navigateMonth(1)}
+              className="p-1 hover:bg-gray-800 rounded transition-colors"
+            >
+              <ChevronRight className="w-4 h-4 text-gray-400" />
+            </button>
+          </div>
+
+          {/* Day Headers */}
+          <div className="grid grid-cols-7 gap-1 mb-2">
+            {dayNames.map(day => (
+              <div key={day} className="text-center text-xs text-gray-500 font-medium p-1">
+                {day}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar Grid - Perfect Cube Proportions! */}
+          <div className="grid grid-cols-7 gap-1">
+            {calendarDays.map((day, index) => (
+              <button
+                key={index}
+                type="button"
+                disabled={day === null || isDateDisabled(day)}
+                onClick={() => day && handleDateClick(day)}
+                className={`
+                  aspect-square text-xs rounded transition-all duration-200 flex items-center justify-center
+                  ${day === null ? 'invisible' : ''}
+                  ${isDateDisabled(day) ? 'text-gray-600 cursor-not-allowed' : 'hover:bg-gray-800'}
+                  ${isSelectedDate(day) ? 'bg-gradient-to-r from-yellow-600 to-amber-600 text-black font-bold' : ''}
+                  ${isToday(day) && !isSelectedDate(day) ? 'bg-blue-600 text-white' : ''}
+                  ${!isSelectedDate(day) && !isToday(day) && !isDateDisabled(day) ? 'text-gray-300' : ''}
+                `}
+              >
+                {day}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Backdrop to close calendar */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 z-40" 
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+// Helper function to determine smart task status
+const getTaskStatus = (task) => {
+  const today = new Date();
+  const dueDate = new Date(task.due_date || task.date);
+  
+  // Set time to start of day for accurate comparison
+  today.setHours(0, 0, 0, 0);
+  dueDate.setHours(0, 0, 0, 0);
+  
+  if (task.status === 'completed') {
+    return { label: 'Completed', color: 'bg-green-600 text-white' };
+  }
+  if (task.status === 'in-progress' || task.status === 'in_progress') {
+    return { label: 'In Progress', color: 'bg-blue-600 text-white' };
+  }
+  if (dueDate < today) {
+    return { label: 'Overdue', color: 'bg-red-600 text-white' };
+  }
+  return { label: 'Upcoming', color: 'bg-gray-600 text-white' };
+};
+
+// TasksPage Component - Optimized 3-Card Window with Spacious Arrows! 🎠
+function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleClick }) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  // Show exactly 3 cards for better spacing and arrow visibility
+  const cardsToShow = 3;
+  const totalWindows = Math.ceil(tasks.length / cardsToShow);
+  const maxIndex = totalWindows - 1;
+  
+  const nextWindow = () => {
+    if (currentIndex < maxIndex) {
+      setCurrentIndex(prev => prev + 1);
+    }
+  };
+  
+  const prevWindow = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(prev => prev - 1);
+    }
+  };
+  
+  // Get the visible tasks (full window sliding)
+  const startIndex = currentIndex * cardsToShow;
+  const endIndex = startIndex + cardsToShow;
+  const visibleTasks = tasks.slice(startIndex, endIndex);
+
+  return (
+    <div className="space-y-6">
+      {/* Schedule Info */}
+      <div className="bg-gray-900 rounded-xl p-6 border border-yellow-600/30">
+        <h3 className="text-xl font-semibold text-yellow-400 mb-2">{schedule.schedule_title}</h3>
+        <p className="text-gray-400">{schedule.description}</p>
+        <div className="flex items-center space-x-4 mt-4">
+          <span className="text-sm text-gray-500">
+            <strong>Pattern:</strong> {schedule.repeat_pattern}
+          </span>
+          <span className="text-sm text-gray-500">
+            <strong>Status:</strong> {schedule.status}
+          </span>
+        </div>
+      </div>
+
+      {/* Tasks Section */}
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-600"></div>
+        </div>
+      ) : tasks.length > 0 ? (
+        <div className="space-y-4">
+          {/* Header with Full Window Info */}
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-white">
+              Tasks ({tasks.length})
+            </h3>
+            {totalWindows > 1 && (
+              <div className="text-sm text-gray-400">
+                Window {currentIndex + 1} of {totalWindows} • Showing {startIndex + 1}-{Math.min(endIndex, tasks.length)}
+              </div>
+            )}
+          </div>
+
+          {/* Full Window Sliding Carousel - Proper Space Management */}
+          <div className="flex items-center space-x-4">
+            {/* Left Arrow - Always visible space */}
+            <div className="w-12 flex justify-center">
+              {currentIndex > 0 && (
+                <button
+                  onClick={prevWindow}
+                  className="bg-gray-800/90 hover:bg-gray-700 border border-yellow-600/50 rounded-full p-3 transition-all duration-200 hover:scale-110 shadow-xl"
+                >
+                  <ChevronLeft className="w-5 h-5 text-yellow-400" />
+                </button>
+              )}
+            </div>
+            
+            {/* Tasks Container - Smaller cards to fit with arrows */}
+            <div className="flex-1 overflow-hidden rounded-xl">
+              <div className="grid grid-cols-3 gap-3 transition-all duration-400 ease-out">
+                {visibleTasks.map((task) => {
+                  const taskStatus = getTaskStatus(task);
+                  const isCompleted = task.status === 'completed';
+                  const isInProgress = task.status === 'in-progress' || task.status === 'in_progress';
+                  
+                  return (
+                    <div key={task._id} className="min-w-0">
+                      <div className="bg-gray-900 rounded-xl p-4 border border-yellow-600/30 hover:border-yellow-500/50 transition-all duration-300 h-full">
+                        <h4 className="font-semibold text-white mb-2 text-center text-sm">{task.task_title || task.name}</h4>
+                        <p className="text-gray-400 text-xs mb-3 text-center line-clamp-2">{task.task_description || task.description}</p>
+                        
+                        <div className="flex flex-col items-center space-y-2 mb-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${taskStatus.color}`}>
+                            {taskStatus.label}
+                          </span>
+                          <span className="text-gray-500 text-xs">
+                            Due: {new Date(task.due_date || task.date).toLocaleDateString()}
+                          </span>
+                        </div>
+
+                        {/* Task Action Buttons - Compact for better fit */}
+                        <div className="space-y-2">
+                          {!isCompleted && (
+                            <>
+                              {!isInProgress && (
+                                <button
+                                  onClick={() => updateTaskStatus(task._id, 'in-progress')}
+                                  className="w-full px-3 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 text-xs font-medium shadow-lg transform hover:scale-105"
+                                >
+                                  🚀 Start
+                                </button>
+                              )}
+                              
+                              {isInProgress && (
+                                <button
+                                  onClick={() => updateTaskStatus(task._id, 'completed')}
+                                  className="w-full px-3 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 text-xs font-medium shadow-lg transform hover:scale-105"
+                                >
+                                  ✅ Complete
+                                </button>
+                              )}
+                              
+                              <button
+                                onClick={() => onRescheduleClick(task)}
+                                className="w-full px-3 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:from-orange-400 hover:to-amber-400 transition-all duration-200 text-xs font-medium shadow-lg transform hover:scale-105"
+                              >
+                                📅 Reschedule
+                              </button>
+                            </>
+                          )}
+                          
+                          {isCompleted && (
+                            <div className="text-center">
+                              <span className="w-full inline-block px-3 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg text-xs font-medium">
+                                ✅ Completed
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+                
+                {/* Fill empty slots if less than 3 tasks in current window */}
+                {visibleTasks.length < cardsToShow && 
+                  Array.from({ length: cardsToShow - visibleTasks.length }).map((_, index) => (
+                    <div key={`empty-${index}`} className="min-w-0">
+                      <div className="bg-gray-800/30 rounded-xl p-4 border border-gray-700/30 h-full flex items-center justify-center">
+                        <span className="text-gray-600 text-sm">No more tasks</span>
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+            
+            {/* Right Arrow - Always visible space */}
+            <div className="w-12 flex justify-center">
+              {currentIndex < maxIndex && (
+                <button
+                  onClick={nextWindow}
+                  className="bg-gray-800/90 hover:bg-gray-700 border border-yellow-600/50 rounded-full p-3 transition-all duration-200 hover:scale-110 shadow-xl"
+                >
+                  <ChevronRight className="w-5 h-5 text-yellow-400" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Window Indicators */}
+          {totalWindows > 1 && (
+            <div className="flex justify-center space-x-3 mt-6">
+              {Array.from({ length: totalWindows }).map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setCurrentIndex(index)}
+                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                    currentIndex === index
+                      ? 'bg-yellow-500 scale-125' 
+                      : 'bg-gray-600 hover:bg-gray-500'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-gray-400">No tasks found for this schedule.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ChatPage Component
+function ChatPage() {
+  return (
+    <div className="bg-gray-900 rounded-xl p-8 border border-yellow-600/30 text-center">
+      <MessageCircle className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
+      <h3 className="text-xl font-semibold text-white mb-2">AI Chat Assistant</h3>
+      <p className="text-gray-400">Coming soon! Chat with AI to help plan your schedules.</p>
+    </div>
+  );
+}
+
+// ProfilePage Component
+function ProfilePage({ user }) {
+  return (
+    <div className="bg-gray-900 rounded-xl p-8 border border-yellow-600/30">
+      <h3 className="text-xl font-semibold text-yellow-400 mb-6">Profile Settings</h3>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Name</label>
+          <input
+            type="text"
+            value={user?.name || ''}
+            readOnly
+            className="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg text-white"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+          <input
+            type="email"
+            value={user?.email || ''}
+            readOnly
+            className="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg text-white"
+          />
+        </div>
+        <p className="text-gray-400 text-sm">Profile editing coming soon!</p>
+      </div>
+    </div>
+  );
+}
+
+// CreateScheduleModal Component
+function CreateScheduleModal({ onClose, onSubmit, loading }) {
+  const [formData, setFormData] = useState({
+    schedule_title: '',
+    starting_date: '',
+    end_date: '',
+    repeat_pattern: 'daily',
+    description: ''
+  });
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.schedule_title || !formData.starting_date || !formData.end_date) {
+      alert('Please fill all required fields');
+      return;
+    }
+    onSubmit(formData);
+  };
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
+      <div className="bg-gray-900 rounded-xl p-8 w-full max-w-md border border-yellow-600/30">
+        <h3 className="text-xl font-semibold text-yellow-400 mb-6">Create New Schedule</h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Title *</label>
+            <input
+              type="text"
+              name="schedule_title"
+              value={formData.schedule_title}
+              onChange={handleChange}
+              className="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg text-white focus:border-yellow-400 focus:outline-none"
+              placeholder="e.g., Learn React JS"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Description</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg text-white focus:border-yellow-400 focus:outline-none"
+              placeholder="What will you learn?"
+              rows="3"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <MiniCalendar 
+                selectedDate={formData.starting_date}
+                onDateSelect={(date) => setFormData({...formData, starting_date: date})}
+                minDate={new Date().toISOString().split('T')[0]}
+                label="Start Date"
+              />
+            </div>
+            <div>
+              <MiniCalendar 
+                selectedDate={formData.end_date}
+                onDateSelect={(date) => setFormData({...formData, end_date: date})}
+                minDate={formData.starting_date || new Date().toISOString().split('T')[0]}
+                label="End Date"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-300 mb-1">Repeat Pattern</label>
+            <select
+              name="repeat_pattern"
+              value={formData.repeat_pattern}
+              onChange={handleChange}
+              className="w-full px-3 py-2 bg-black border border-gray-600 rounded-lg text-white focus:border-yellow-400 focus:outline-none"
+            >
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="once">Once</option>
+            </select>
+          </div>
+          <div className="flex space-x-4 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-500 transition-all duration-200"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-600 to-amber-600 text-black rounded-lg font-semibold hover:from-yellow-500 hover:to-amber-500 transition-all duration-200 disabled:opacity-50"
+            >
+              {loading ? 'Creating...' : 'Create Schedule'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// RescheduleModal Component
+function RescheduleModal({ task, onClose, onSubmit, loading }) {
+  const [newDate, setNewDate] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (newDate) {
+      onSubmit(task._id, newDate);
+    }
+  };
+
+  // Set minimum date to today
+  const today = new Date().toISOString().split('T')[0];
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-gray-900 rounded-lg p-6 w-full max-w-md border border-yellow-600/30">
+        <h3 className="text-xl font-semibold text-white mb-4">Reschedule Task</h3>
+        
+        <div className="mb-4">
+          <h4 className="text-yellow-400 font-medium">{task.task_title || task.name}</h4>
+          <p className="text-gray-400 text-sm mt-1">{task.task_description || task.description}</p>
+          <p className="text-gray-500 text-sm mt-2">
+            Current due date: {new Date(task.due_date || task.date).toLocaleDateString()}
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-6">
+            <MiniCalendar 
+              selectedDate={newDate}
+              onDateSelect={setNewDate}
+              minDate={today}
+              label="New Due Date"
+            />
+          </div>
+
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading || !newDate}
+              className="flex-1 px-4 py-2 bg-gradient-to-r from-yellow-600 to-amber-600 text-black rounded-lg font-semibold hover:from-yellow-500 hover:to-amber-500 transition-all duration-200 disabled:opacity-50"
+            >
+              {loading ? 'Rescheduling...' : 'Reschedule'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
