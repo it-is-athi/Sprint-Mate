@@ -4,43 +4,6 @@ const Schedule = require('../models/Schedule');
 const Task = require('../models/Task');
 const { protect } = require('../middlewares/authMiddleware');
 
-// Create a new schedule
-router.post('/', protect, async (req, res) => {
-  try {
-    const { 
-      schedule_title, 
-      description, 
-      repeat_pattern, 
-      starting_date, 
-      end_date
-    } = req.body;
-
-    // Validate required fields
-    if (!schedule_title) {
-      return res.status(400).json({ 
-        message: 'Schedule title is required' 
-      });
-    }
-
-    // Create new schedule
-    const newSchedule = new Schedule({
-      owner_id: req.user.id,
-      schedule_title,
-      description,
-      repeat_pattern: repeat_pattern || 'daily',
-      starting_date: starting_date || new Date(),
-      end_date,
-      status: 'active'
-    });
-
-    const savedSchedule = await newSchedule.save();
-    res.status(201).json(savedSchedule);
-  } catch (error) {
-    console.error('Error creating schedule:', error);
-    res.status(500).json({ message: 'Failed to create schedule' });
-  }
-});
-
 // Get all schedules for the authenticated user
 router.get('/user-schedules', protect, async (req, res) => {
   try {

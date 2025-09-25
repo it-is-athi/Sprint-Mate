@@ -18,13 +18,34 @@ exports.createScheduleFromForm = async (req, res) => {
     const userId = req.user.id;
 
     // Validate required fields
-    const requiredFields = ['schedule_title', 'starting_date', 'end_date', 'repeat_pattern'];
+    const requiredFields = ['schedule_title', 'starting_date', 'repeat_pattern'];
     const missingFields = requiredFields.filter(field => !scheduleData[field]);
     
     if (missingFields.length > 0) {
       return res.status(400).json({ 
         message: `Missing required fields: ${missingFields.join(', ')}` 
       });
+    }
+
+    // If no end_date provided, set a reasonable default based on repeat_pattern
+    if (!scheduleData.end_date) {
+      const startDate = new Date(scheduleData.starting_date);
+      switch (scheduleData.repeat_pattern) {
+        case 'daily':
+          scheduleData.end_date = new Date(startDate.setDate(startDate.getDate() + 30)); // 30 days
+          break;
+        case 'weekly':
+          scheduleData.end_date = new Date(startDate.setDate(startDate.getDate() + 84)); // 12 weeks
+          break;
+        case 'monthly':
+          scheduleData.end_date = new Date(startDate.setMonth(startDate.getMonth() + 6)); // 6 months
+          break;
+        case 'once':
+          scheduleData.end_date = scheduleData.starting_date; // Same day
+          break;
+        default:
+          scheduleData.end_date = new Date(startDate.setDate(startDate.getDate() + 30)); // Default 30 days
+      }
     }
 
     // Add owner_id to the schedule data
