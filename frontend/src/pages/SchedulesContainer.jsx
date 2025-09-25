@@ -93,7 +93,8 @@ function SchedulesContainer() {
                 schedule_title: formData.get('schedule_title'),
                 description: formData.get('description'),
                 repeat_pattern: formData.get('repeat_pattern') || 'daily',
-                starting_date: formData.get('starting_date') || new Date().toISOString().split('T')[0]
+                starting_date: formData.get('starting_date') || new Date().toISOString().split('T')[0],
+                end_date: formData.get('end_date')
               };
               createSchedule(scheduleData);
             }}>
@@ -147,15 +148,28 @@ function SchedulesContainer() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
-                      Topics to Cover (for AI)
+                      Topics to Cover (Optional)
                     </label>
                     <textarea
                       name="description"
-                      rows="6"
-                      placeholder="e.g., OSI layers, TCP/IP protocols, network security, routing algorithms..."
+                      rows="4"
+                      placeholder="e.g., OSI layers, TCP/IP protocols, network security... (Leave blank for AI to decide)"
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none"
                     />
-                    <p className="text-xs text-gray-500 mt-1">AI will use this to generate specific tasks and learning objectives</p>
+                    <p className="text-xs text-gray-500 mt-1">AI will use this as guidance if provided, or create topics automatically from the schedule title</p>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      End Date *
+                    </label>
+                    <input
+                      type="date"
+                      name="end_date"
+                      required
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Determines how many tasks AI will create (Oct 1-30 daily = 30 tasks)</p>
                   </div>
                 </div>
               </div>
