@@ -3,34 +3,39 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Helper function to determine task status
 const getTaskStatus = (task) => {
+  // First priority: Check actual task status from database
   if (task.status === 'completed') {
     return { label: 'Completed', color: 'bg-green-600 text-white' };
   }
   
-  const today = new Date();
-  const taskDate = new Date(task.date);
-  
-  // Normalize dates to compare only the date part (ignore time)
-  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const taskDateOnly = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
-  
-  const isOverdue = taskDateOnly < todayDateOnly && task.status !== 'completed';
-  const isToday = taskDateOnly.getTime() === todayDateOnly.getTime();
-  const isUpcoming = taskDateOnly > todayDateOnly;
-  
-  if (isOverdue) {
-    return { label: 'Overdue', color: 'bg-red-600 text-white' };
-  } else if (isToday && task.status !== 'completed') {
-    return { label: 'Pending', color: 'bg-yellow-600 text-white' };
-  } else if (isToday && task.status === 'completed') {
-    return { label: 'Completed Today', color: 'bg-green-600 text-white' };
-  } else if (isUpcoming) {
-    return { label: 'Upcoming', color: 'bg-blue-600 text-white' };
-  } else if (task.status === 'in-progress' || task.status === 'in_progress') {
+  if (task.status === 'in-progress' || task.status === 'in_progress') {
     return { label: 'In Progress', color: 'bg-blue-600 text-white' };
-  } else {
-    return { label: 'Pending', color: 'bg-yellow-600 text-white' };
   }
+  
+  // Second priority: If status is 'pending', determine display based on date
+  if (task.status === 'pending') {
+    const today = new Date();
+    const taskDate = new Date(task.date);
+    
+    // Normalize dates to compare only the date part (ignore time)
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const taskDateOnly = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+    
+    const isOverdue = taskDateOnly < todayDateOnly;
+    const isToday = taskDateOnly.getTime() === todayDateOnly.getTime();
+    const isUpcoming = taskDateOnly > todayDateOnly;
+    
+    if (isOverdue) {
+      return { label: 'Overdue', color: 'bg-red-600 text-white' };
+    } else if (isToday) {
+      return { label: 'Pending', color: 'bg-yellow-600 text-white' };
+    } else if (isUpcoming) {
+      return { label: 'Upcoming', color: 'bg-blue-600 text-white' };
+    }
+  }
+  
+  // Default fallback
+  return { label: 'Pending', color: 'bg-yellow-600 text-white' };
 };
 
 // Helper function to determine what status task should revert to when stopped
