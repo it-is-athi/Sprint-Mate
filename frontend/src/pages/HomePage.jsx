@@ -15,24 +15,40 @@ function HomePage({ todaysTasks, updateTaskStatus, user }) {
     }
     
     const today = new Date();
-    const dueDate = new Date(task.due_date || task.date);
-    const isOverdue = dueDate < today && task.status !== 'completed';
-    const isToday = dueDate.toDateString() === today.toDateString();
+    const taskDate = new Date(task.date);
+    
+    // Normalize dates to compare only the date part (ignore time)
+    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const taskDateOnly = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+    
+    const isOverdue = taskDateOnly < todayDateOnly && task.status !== 'completed';
+    const isToday = taskDateOnly.getTime() === todayDateOnly.getTime();
+    const isUpcoming = taskDateOnly > todayDateOnly;
     
     if (isOverdue) {
       return {
         label: 'Overdue',
         color: 'bg-red-500/20 text-red-400 border-red-500/30'
       };
-    } else if (isToday) {
+    } else if (isToday && task.status !== 'completed') {
       return {
-        label: 'Due Today',
+        label: 'Pending',
         color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
       };
-    } else {
+    } else if (isToday && task.status === 'completed') {
+      return {
+        label: 'Completed Today',
+        color: 'bg-green-500/20 text-green-400 border-green-500/30'
+      };
+    } else if (isUpcoming) {
       return {
         label: 'Upcoming',
         color: 'bg-blue-500/20 text-blue-400 border-blue-500/30'
+      };
+    } else {
+      return { 
+        label: 'Pending',
+        color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
       };
     }
   };
