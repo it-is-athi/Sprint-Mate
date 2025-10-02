@@ -1,11 +1,8 @@
-// backend/server.js
+const dotenv = require('dotenv');
+dotenv.config(); // <-- MUST be first!
 
 const app = require('./app');
-const dotenv = require('dotenv');
 const connectDB = require('./config/db');
-
-// Load environment variables
-dotenv.config();
 
 // Connect to MongoDB
 connectDB();
