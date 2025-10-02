@@ -141,49 +141,61 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                           </span>
                         </div>
 
-                        {/* Task Action Buttons - Compact for better fit */}
+                        {/* Task Action Buttons - Glassy effect with side-by-side layout */}
                         <div className="space-y-2">
                           {!isCompleted && (
                             <>
                               {!isInProgress && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    updateTaskStatus(task._id, 'in-progress');
-                                  }}
-                                  className="w-full px-3 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 text-xs font-medium shadow-lg transform hover:scale-105"
-                                >
-                                  🚀 Start
-                                </button>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateTaskStatus(task._id, 'in-progress');
+                                    }}
+                                    className="flex-1 px-2 py-1.5 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 text-xs font-medium"
+                                  >
+                                    🚀 Start
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onRescheduleClick(task);
+                                    }}
+                                    className="flex-1 px-2 py-1.5 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-100 rounded-lg hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 text-xs font-medium"
+                                  >
+                                    � Reschedule
+                                  </button>
+                                </div>
                               )}
                               
                               {isInProgress && (
-                                <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    updateTaskStatus(task._id, 'completed');
-                                  }}
-                                  className="w-full px-3 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 text-xs font-medium shadow-lg transform hover:scale-105"
-                                >
-                                  ✅ Complete
-                                </button>
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateTaskStatus(task._id, 'completed');
+                                    }}
+                                    className="flex-1 px-2 py-1.5 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 text-xs font-medium"
+                                  >
+                                    ✅ Complete
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onRescheduleClick(task);
+                                    }}
+                                    className="flex-1 px-2 py-1.5 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-100 rounded-lg hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 text-xs font-medium"
+                                  >
+                                    📅 Reschedule
+                                  </button>
+                                </div>
                               )}
-                              
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onRescheduleClick(task);
-                                }}
-                                className="w-full px-3 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:from-orange-400 hover:to-amber-400 transition-all duration-200 text-xs font-medium shadow-lg transform hover:scale-105"
-                              >
-                                📅 Reschedule
-                              </button>
                             </>
                           )}
                           
                           {isCompleted && (
                             <div className="text-center">
-                              <span className="w-full inline-block px-3 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg text-xs font-medium">
+                              <span className="w-full inline-block px-3 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg text-xs font-medium">
                                 ✅ Completed
                               </span>
                             </div>
@@ -280,45 +292,58 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                 </div>
               </div>
               
-              {/* Task Actions */}
+              {/* Task Actions - Glassy effect with side-by-side layout */}
               {selectedTask.status !== 'completed' && (
                 <div className="flex gap-3 pt-2">
                   {selectedTask.status !== 'in-progress' && selectedTask.status !== 'in_progress' && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateTaskStatus(selectedTask._id, 'in-progress');
-                        setShowTaskModal(false);
-                      }}
-                      className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 font-medium"
-                    >
-                      🚀 Start Task
-                    </button>
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateTaskStatus(selectedTask._id, 'in-progress');
+                          setShowTaskModal(false);
+                        }}
+                        className="flex-1 px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 font-medium"
+                      >
+                        🚀 Start Task
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowTaskModal(false);
+                          onRescheduleClick(selectedTask);
+                        }}
+                        className="flex-1 px-4 py-2 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-100 rounded-lg hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 font-medium"
+                      >
+                        � Reschedule
+                      </button>
+                    </>
                   )}
                   
                   {(selectedTask.status === 'in-progress' || selectedTask.status === 'in_progress') && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateTaskStatus(selectedTask._id, 'completed');
-                        setShowTaskModal(false);
-                      }}
-                      className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 font-medium"
-                    >
-                      ✅ Complete Task
-                    </button>
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          updateTaskStatus(selectedTask._id, 'completed');
+                          setShowTaskModal(false);
+                        }}
+                        className="flex-1 px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 font-medium"
+                      >
+                        ✅ Complete Task
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowTaskModal(false);
+                          onRescheduleClick(selectedTask);
+                        }}
+                        className="flex-1 px-4 py-2 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-100 rounded-lg hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 font-medium"
+                      >
+                        📅 Reschedule
+                      </button>
+                    </>
                   )}
-                  
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setShowTaskModal(false);
-                      onRescheduleClick(selectedTask);
-                    }}
-                    className="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:from-orange-400 hover:to-amber-400 transition-all duration-200 font-medium"
-                  >
-                    📅 Reschedule
-                  </button>
                 </div>
               )}
             </div>
