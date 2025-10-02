@@ -33,6 +33,30 @@ const getTaskStatus = (task) => {
   }
 };
 
+// Helper function to determine what status task should revert to when stopped
+const getOriginalTaskStatus = (task) => {
+  const today = new Date();
+  const taskDate = new Date(task.date);
+  
+  // Normalize dates to compare only the date part (ignore time)
+  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const taskDateOnly = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+  
+  const isOverdue = taskDateOnly < todayDateOnly;
+  const isToday = taskDateOnly.getTime() === todayDateOnly.getTime();
+  const isUpcoming = taskDateOnly > todayDateOnly;
+  
+  if (isOverdue) {
+    return 'overdue';
+  } else if (isToday) {
+    return 'pending';
+  } else if (isUpcoming) {
+    return 'upcoming';
+  } else {
+    return 'pending';
+  }
+};
+
 function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleClick }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTaskModal, setShowTaskModal] = useState(false);
@@ -182,11 +206,12 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      onRescheduleClick(task);
+                                      const originalStatus = getOriginalTaskStatus(task);
+                                      updateTaskStatus(task._id, originalStatus);
                                     }}
-                                    className="flex-1 px-2 py-1.5 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-100 rounded-lg hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 text-xs font-medium"
+                                    className="flex-1 px-2 py-1.5 bg-red-500/20 backdrop-blur-sm border border-red-400/30 text-red-100 rounded-lg hover:bg-red-500/30 hover:border-red-400/50 transition-all duration-200 text-xs font-medium"
                                   >
-                                    📅 Reschedule
+                                    ⏹️ Stop
                                   </button>
                                 </div>
                               )}
@@ -335,12 +360,13 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
+                          const originalStatus = getOriginalTaskStatus(selectedTask);
+                          updateTaskStatus(selectedTask._id, originalStatus);
                           setShowTaskModal(false);
-                          onRescheduleClick(selectedTask);
                         }}
-                        className="flex-1 px-4 py-2 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-100 rounded-lg hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 font-medium"
+                        className="flex-1 px-4 py-2 bg-red-500/20 backdrop-blur-sm border border-red-400/30 text-red-100 rounded-lg hover:bg-red-500/30 hover:border-red-400/50 transition-all duration-200 font-medium"
                       >
-                        📅 Reschedule
+                        ⏹️ Stop Task
                       </button>
                     </>
                   )}
