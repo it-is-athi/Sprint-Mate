@@ -3,27 +3,40 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 // Helper function to determine task status
 const getTaskStatus = (task) => {
-  const today = new Date();
-  const dueDate = new Date(task.due_date || task.date);
-  
-  // Set time to start of day for accurate comparison
-  today.setHours(0, 0, 0, 0);
-  dueDate.setHours(0, 0, 0, 0);
-  
   if (task.status === 'completed') {
     return { label: 'Completed', color: 'bg-green-600 text-white' };
   }
-  if (task.status === 'in-progress' || task.status === 'in_progress') {
-    return { label: 'In Progress', color: 'bg-blue-600 text-white' };
-  }
-  if (dueDate < today) {
+  
+  const today = new Date();
+  const taskDate = new Date(task.date);
+  
+  // Normalize dates to compare only the date part (ignore time)
+  const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+  const taskDateOnly = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+  
+  const isOverdue = taskDateOnly < todayDateOnly && task.status !== 'completed';
+  const isToday = taskDateOnly.getTime() === todayDateOnly.getTime();
+  const isUpcoming = taskDateOnly > todayDateOnly;
+  
+  if (isOverdue) {
     return { label: 'Overdue', color: 'bg-red-600 text-white' };
+  } else if (isToday && task.status !== 'completed') {
+    return { label: 'Pending', color: 'bg-yellow-600 text-white' };
+  } else if (isToday && task.status === 'completed') {
+    return { label: 'Completed Today', color: 'bg-green-600 text-white' };
+  } else if (isUpcoming) {
+    return { label: 'Upcoming', color: 'bg-blue-600 text-white' };
+  } else if (task.status === 'in-progress' || task.status === 'in_progress') {
+    return { label: 'In Progress', color: 'bg-blue-600 text-white' };
+  } else {
+    return { label: 'Pending', color: 'bg-yellow-600 text-white' };
   }
-  return { label: 'Upcoming', color: 'bg-gray-600 text-white' };
 };
 
 function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleClick }) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
   
   // Show exactly 3 cards for better spacing and arrow visibility
   const cardsToShow = 3;
@@ -40,6 +53,12 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
     if (currentIndex > 0) {
       setCurrentIndex(prev => prev - 1);
     }
+  };
+  
+  // Handle task card click to show full description
+  const handleTaskClick = (task) => {
+    setSelectedTask(task);
+    setShowTaskModal(true);
   };
   
   // Get the visible tasks (full window sliding)
@@ -106,7 +125,10 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                   
                   return (
                     <div key={task._id} className="min-w-0">
-                      <div className="bg-gray-900 rounded-xl p-4 border border-yellow-600/30 hover:border-yellow-500/50 transition-all duration-300 h-full">
+                      <div 
+                        className="bg-gray-900 rounded-xl p-4 border border-yellow-600/30 hover:border-yellow-500/50 transition-all duration-300 h-full cursor-pointer"
+                        onClick={() => handleTaskClick(task)}
+                      >
                         <h4 className="font-semibold text-white mb-2 text-center text-sm">{task.task_title || task.name}</h4>
                         <p className="text-gray-400 text-xs mb-3 text-center line-clamp-2">{task.task_description || task.description}</p>
                         
@@ -125,7 +147,10 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                             <>
                               {!isInProgress && (
                                 <button
-                                  onClick={() => updateTaskStatus(task._id, 'in-progress')}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateTaskStatus(task._id, 'in-progress');
+                                  }}
                                   className="w-full px-3 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 text-xs font-medium shadow-lg transform hover:scale-105"
                                 >
                                   🚀 Start
@@ -134,7 +159,10 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                               
                               {isInProgress && (
                                 <button
-                                  onClick={() => updateTaskStatus(task._id, 'completed')}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    updateTaskStatus(task._id, 'completed');
+                                  }}
                                   className="w-full px-3 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 text-xs font-medium shadow-lg transform hover:scale-105"
                                 >
                                   ✅ Complete
@@ -142,7 +170,10 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                               )}
                               
                               <button
-                                onClick={() => onRescheduleClick(task)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onRescheduleClick(task);
+                                }}
                                 className="w-full px-3 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:from-orange-400 hover:to-amber-400 transition-all duration-200 text-xs font-medium shadow-lg transform hover:scale-105"
                               >
                                 📅 Reschedule
@@ -209,6 +240,89 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
       ) : (
         <div className="text-center py-12">
           <p className="text-gray-400">No tasks found for this schedule.</p>
+        </div>
+      )}
+
+      {/* Task Detail Modal */}
+      {showTaskModal && selectedTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-xl border border-yellow-600/30 max-w-2xl w-[90vw] max-h-[80vh] overflow-auto">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-semibold text-white pr-4">
+                {selectedTask.task_title || selectedTask.name}
+              </h3>
+              <button
+                onClick={() => setShowTaskModal(false)}
+                className="text-gray-400 hover:text-white transition-colors duration-200 text-xl font-bold leading-none"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Task Status and Due Date */}
+              <div className="flex flex-wrap gap-3 items-center">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${getTaskStatus(selectedTask).color}`}>
+                  {getTaskStatus(selectedTask).label}
+                </span>
+                <span className="text-gray-400 text-sm">
+                  Due: {new Date(selectedTask.due_date || selectedTask.date).toLocaleDateString()}
+                </span>
+              </div>
+              
+              {/* Full Task Description */}
+              <div>
+                <h4 className="text-lg font-medium text-white mb-2">Description</h4>
+                <div className="bg-gray-800 p-4 rounded-lg">
+                  <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+                    {selectedTask.task_description || selectedTask.description || 'No description available.'}
+                  </p>
+                </div>
+              </div>
+              
+              {/* Task Actions */}
+              {selectedTask.status !== 'completed' && (
+                <div className="flex gap-3 pt-2">
+                  {selectedTask.status !== 'in-progress' && selectedTask.status !== 'in_progress' && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateTaskStatus(selectedTask._id, 'in-progress');
+                        setShowTaskModal(false);
+                      }}
+                      className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 font-medium"
+                    >
+                      🚀 Start Task
+                    </button>
+                  )}
+                  
+                  {(selectedTask.status === 'in-progress' || selectedTask.status === 'in_progress') && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateTaskStatus(selectedTask._id, 'completed');
+                        setShowTaskModal(false);
+                      }}
+                      className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 font-medium"
+                    >
+                      ✅ Complete Task
+                    </button>
+                  )}
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowTaskModal(false);
+                      onRescheduleClick(selectedTask);
+                    }}
+                    className="px-4 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-lg hover:from-orange-400 hover:to-amber-400 transition-all duration-200 font-medium"
+                  >
+                    📅 Reschedule
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

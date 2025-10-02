@@ -44,9 +44,9 @@ function DashboardLayout() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex overflow-x-hidden">
-      {/* Sidebar */}
-      <div className="w-64 bg-gradient-to-b from-gray-900 to-black border-r border-yellow-600/30 flex flex-col flex-shrink-0">
+    <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      {/* Fixed Sidebar - Never moves when scrolling */}
+      <div className="fixed left-0 top-0 h-screen w-64 bg-gradient-to-b from-gray-900 to-black border-r border-yellow-600/30 flex flex-col flex-shrink-0 z-50">
         {/* Logo */}
         <div className="p-6 border-b border-yellow-600/30">
           <div className="flex items-center">
@@ -86,8 +86,8 @@ function DashboardLayout() {
         </nav>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      {/* Main Content - Add left margin for fixed sidebar */}
+      <div className="ml-64 flex flex-col min-h-screen">
         {/* Top Bar */}
         <header className="bg-gray-900 border-b border-yellow-600/30 p-6">
           <div className="flex items-center justify-between">
