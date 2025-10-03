@@ -34,15 +34,17 @@ router.get('/today', protect, async (req, res) => {
     const startOfDay = new Date(targetDate);
     const endOfDay = new Date(targetDate);
     endOfDay.setDate(endOfDay.getDate() + 1);
-    
+
     const tasks = await Task.find({
       owner_id: req.user.id,
       date: {
         $gte: startOfDay,
         $lt: endOfDay
       }
-    }).sort({ date: 1 });
-    
+    })
+    .populate('schedule_id', 'schedule_title') // Populate schedule information
+    .sort({ date: 1 });
+
     res.json(tasks);
   } catch (error) {
     console.error('Error fetching today\'s tasks:', error);
