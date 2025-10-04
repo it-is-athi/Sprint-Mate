@@ -3,9 +3,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm'; // <-- 1. IMPORT THE GFM PLUGIN
 import { Send, FileText, XCircle } from 'lucide-react';
 
 function ChatPage() {
+  // ... (keep all your existing state and functions: useState, useEffect, handleFileChange, etc.)
   const [file, setFile] = useState(null);
   const [question, setQuestion] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
@@ -34,10 +36,8 @@ function ChatPage() {
     setIsLoading(true);
     setUploadStatus('Processing document...');
     setChatHistory([]);
-
     const formData = new FormData();
     formData.append('pdfFile', file);
-
     try {
       const response = await axios.post('http://localhost:5000/api/rag/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -56,12 +56,10 @@ function ChatPage() {
   const handleAskQuestion = async (e) => {
     e.preventDefault();
     if (!question.trim()) return;
-
     const userMessage = { sender: 'user', text: question };
     setIsLoading(true);
     setChatHistory((prev) => [...prev, userMessage]);
     setQuestion('');
-
     try {
       const response = await axios.post('http://localhost:5000/api/rag/ask', {
         question: question,
@@ -83,6 +81,7 @@ function ChatPage() {
     setFile(null);
     setChatHistory([]);
   };
+
 
   return (
     <div className="flex flex-col h-full w-full">
@@ -119,16 +118,12 @@ function ChatPage() {
           )}
           {chatHistory.map((chat, index) => (
             <div key={index} className={`flex ${chat.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-              
-              {/* --- THE ONLY LINE THAT CHANGED --- */}
-              <div className={`px-4 py-3 rounded-lg ${
-                  chat.sender === 'user' 
-                  ? 'bg-slate-600 text-white max-w-2xl' // User bubble has a subtle gray background
-                  : 'w-full'                             // Bot response has no background
-              }`}>
+              <div className={`${chat.sender === 'user' ? 'px-4 py-3 rounded-lg bg-slate-600 text-white max-w-2xl' : 'w-full'}`}>
                 {chat.sender === 'bot' ? (
+                  // The @tailwindcss/typography plugin provides default styling for tables, which is great!
                   <div className="prose prose-sm prose-invert max-w-none">
-                    <ReactMarkdown>{chat.text}</ReactMarkdown>
+                     {/* <-- 2. ADD THE PLUGIN TO THE COMPONENT --> */}
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{chat.text}</ReactMarkdown>
                   </div>
                 ) : (
                   <p className="whitespace-pre-wrap">{chat.text}</p>
