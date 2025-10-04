@@ -1,7 +1,9 @@
 import React from 'react';
 import { Clock, CheckCircle, TrendingUp } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 function HomePage({ todaysTasks, updateTaskStatus, user }) {
+  const navigate = useNavigate();
   const completedTasks = todaysTasks?.filter(task => task.status === 'completed') || [];
   const pendingTasks = todaysTasks?.filter(task => task.status !== 'completed') || [];
   const completionRate = todaysTasks?.length > 0 ? Math.round((completedTasks.length / todaysTasks.length) * 100) : 0;
@@ -51,6 +53,17 @@ function HomePage({ todaysTasks, updateTaskStatus, user }) {
         color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
       };
     }
+  };
+
+  const handleStudyWithAI = (task) => {
+    navigate('/dashboard/chat', {
+      state: {
+        studyTask: {
+          task: task,
+          scheduleName: task.schedule_id?.schedule_title || 'Unknown Schedule'
+        }
+      }
+    });
   };
 
   return (
@@ -154,6 +167,14 @@ function HomePage({ todaysTasks, updateTaskStatus, user }) {
                     </div>
                     
                     <div className="flex flex-col space-y-2 ml-4">
+                      {/* Study with AI Button - Always visible */}
+                      <button
+                        onClick={() => handleStudyWithAI(task)}
+                        className="px-4 py-2 bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 text-purple-100 rounded-lg hover:bg-purple-500/30 hover:border-purple-400/50 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
+                      >
+                        🧠 Study with AI
+                      </button>
+                      
                       {!isCompleted && (
                         <>
                           {!isInProgress && (

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 // Helper function to determine task status
 const getTaskStatus = (task) => {
@@ -63,6 +64,7 @@ const getOriginalTaskStatus = (task) => {
 };
 
 function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleClick, onCreateTaskClick, onDeleteTaskClick }) {
+  const navigate = useNavigate();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -88,6 +90,18 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
   const handleTaskClick = (task) => {
     setSelectedTask(task);
     setShowTaskModal(true);
+  };
+
+  const handleStudyWithAI = (e, task) => {
+    e.stopPropagation();
+    navigate('/dashboard/chat', {
+      state: {
+        studyTask: {
+          task: task,
+          scheduleName: schedule?.schedule_title || 'Unknown Schedule'
+        }
+      }
+    });
   };
   
   // Get the visible tasks (full window sliding)
@@ -194,6 +208,14 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
 
                         {/* Task Action Buttons - Glassy effect with side-by-side layout */}
                         <div className="space-y-2">
+                          {/* Study with AI Button - Always visible */}
+                          <button
+                            onClick={(e) => handleStudyWithAI(e, task)}
+                            className="w-full px-3 py-2 bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 text-purple-100 rounded-lg hover:bg-purple-500/30 hover:border-purple-400/50 transition-all duration-200 text-xs font-medium flex items-center justify-center gap-2"
+                          >
+                            🧠 Study with AI
+                          </button>
+                          
                           {!isCompleted && (
                             <>
                               {!isInProgress && (
