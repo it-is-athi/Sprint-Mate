@@ -62,7 +62,7 @@ const getOriginalTaskStatus = (task) => {
   }
 };
 
-function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleClick }) {
+function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleClick, onCreateTaskClick }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -99,15 +99,28 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
     <div className="space-y-6">
       {/* Schedule Info */}
       <div className="bg-gray-900 rounded-xl p-6 border border-yellow-600/30">
-        <h3 className="text-xl font-semibold text-yellow-400 mb-2">{schedule.schedule_title}</h3>
-        <p className="text-gray-400">{schedule.description}</p>
-        <div className="flex items-center space-x-4 mt-4">
-          <span className="text-sm text-gray-500">
-            <strong>Pattern:</strong> {schedule.repeat_pattern}
-          </span>
-          <span className="text-sm text-gray-500">
-            <strong>Status:</strong> {schedule.status}
-          </span>
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <h3 className="text-xl font-semibold text-yellow-400 mb-2">{schedule.schedule_title}</h3>
+            <p className="text-gray-400">{schedule.description}</p>
+            <div className="flex items-center space-x-4 mt-4">
+              <span className="text-sm text-gray-500">
+                <strong>Pattern:</strong> {schedule.repeat_pattern}
+              </span>
+              <span className="text-sm text-gray-500">
+                <strong>Status:</strong> {schedule.status}
+              </span>
+            </div>
+          </div>
+          
+          {/* Create Task Button */}
+          <button
+            onClick={onCreateTaskClick}
+            className="flex items-center space-x-2 bg-gradient-to-r from-yellow-600 to-amber-600 text-black px-4 py-2 rounded-lg font-semibold hover:from-yellow-500 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+          >
+            <span className="text-lg">+</span>
+            <span>Add Task</span>
+          </button>
         </div>
       </div>
 

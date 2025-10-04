@@ -13,6 +13,7 @@ function TasksContainer() {
   const [loading, setLoading] = useState(false);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [taskToReschedule, setTaskToReschedule] = useState(null);
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
 
   useEffect(() => {
     if (scheduleId && user) {
@@ -80,6 +81,39 @@ function TasksContainer() {
     setShowRescheduleModal(true);
   };
 
+  const handleCreateTaskClick = () => {
+    setShowCreateTaskModal(true);
+  };
+
+  const createTask = async (taskData) => {
+    try {
+      setLoading(true);
+      console.log('Creating manual task:', taskData);
+      
+      const response = await api.post('/tasks', {
+        ...taskData,
+        schedule_id: scheduleId
+      });
+      
+      console.log('Task created:', response.data);
+      
+      // Refresh tasks after creation
+      await fetchScheduleTasks();
+      setShowCreateTaskModal(false);
+      alert(`Task "${response.data.name}" created successfully!`);
+    } catch (error) {
+      console.error('Error creating task:', error);
+      if (error.response?.status === 401) {
+        console.log('Authentication error, redirecting to login');
+        navigate('/');
+      } else {
+        alert(`Failed to create task: ${error.response?.data?.message || error.message}`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const rescheduleTask = async (taskId, newDate) => {
     try {
       setLoading(true);
@@ -123,6 +157,7 @@ function TasksContainer() {
         loading={loading}
         updateTaskStatus={updateTaskStatus}
         onRescheduleClick={handleRescheduleClick}
+        onCreateTaskClick={handleCreateTaskClick}
       />
       
       {/* Reschedule Modal */}
@@ -168,6 +203,87 @@ function TasksContainer() {
                 Reschedule
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Task Modal */}
+      {showCreateTaskModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-8 rounded-xl border border-yellow-600/30 w-[500px] max-w-[90vw]">
+            <h3 className="text-xl font-semibold text-white mb-6">Create New Task</h3>
+            <p className="text-gray-400 mb-6">
+              Adding task to: <span className="text-yellow-400">{schedule?.schedule_title}</span>
+            </p>
+            
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.target);
+              const taskData = {
+                task_title: formData.get('task_title'),
+                task_description: formData.get('task_description'),
+                date: formData.get('date')
+              };
+              createTask(taskData);
+            }}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Task Title *
+                  </label>
+                  <input
+                    type="text"
+                    name="task_title"
+                    required
+                    placeholder="e.g., Advanced Concepts, Practice Problems, Review Session"
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Description
+                  </label>
+                  <textarea
+                    name="task_description"
+                    rows="3"
+                    placeholder="Describe what needs to be learned or accomplished..."
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                    Date *
+                  </label>
+                  <input
+                    type="date"
+                    name="date"
+                    required
+                    min={new Date().toISOString().split('T')[0]}
+                    defaultValue={new Date().toISOString().split('T')[0]}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="flex space-x-3 mt-8">
+                <button 
+                  type="button"
+                  onClick={() => setShowCreateTaskModal(false)}
+                  className="flex-1 px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all duration-200"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  disabled={loading}
+                  className="flex-1 px-4 py-3 bg-gradient-to-r from-yellow-600 to-amber-600 text-black rounded-lg hover:from-yellow-500 hover:to-amber-500 transition-all duration-200 font-semibold disabled:opacity-50"
+                >
+                  {loading ? 'Creating...' : 'Create Task'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
