@@ -61,26 +61,35 @@ const processPdf = async (fileBuffer) => {
 };
 
 const askQuestion = async (question, isGeneral = false) => {
+  console.log(`🔍 askQuestion called with: question="${question}", isGeneral=${isGeneral}`);
+  
   // --- PATH 1: GENERAL CHAT (NO PDF) ---
   if (isGeneral) {
-    console.log("Handling a general question (no RAG)...");
-    const generalPrompt = ChatPromptTemplate.fromMessages([
-      ["system", "You are a helpful and friendly AI assistant. Answer the user's question clearly and concisely, using Markdown for formatting if appropriate."],
-      new MessagesPlaceholder("chat_history"),
-      ["user", "{input}"],
-    ]);
-    const chain = generalPrompt.pipe(llm);
-    const result = await chain.invoke({
-      chat_history: conversationHistory,
-      input: question,
-    });
-    conversationHistory.push(new HumanMessage(question));
-    conversationHistory.push(new AIMessage(result.content));
-    return result.content;
+    console.log("✅ Handling a general question (no RAG)...");
+    try {
+      const generalPrompt = ChatPromptTemplate.fromMessages([
+        ["system", "You are a helpful and friendly AI assistant. Answer the user's question clearly and concisely, using Markdown for formatting if appropriate."],
+        new MessagesPlaceholder("chat_history"),
+        ["user", "{input}"],
+      ]);
+      const chain = generalPrompt.pipe(llm);
+      const result = await chain.invoke({
+        chat_history: conversationHistory,
+        input: question,
+      });
+      conversationHistory.push(new HumanMessage(question));
+      conversationHistory.push(new AIMessage(result.content));
+      return result.content;
+    } catch (error) {
+      console.error("❌ Error in general chat:", error);
+      throw error;
+    }
   }
 
   // --- PATH 2: DOCUMENT CHAT (RAG) ---
-  console.log("Handling a document-specific question (RAG)...");
+  console.log("📄 Handling a document-specific question (RAG)...");
+  
+  try {
   
   const vectorStore = await QdrantVectorStore.fromExistingCollection(embeddings, { client: qdrantClient, collectionName: QDRANT_COLLECTION_NAME });
   const retriever = vectorStore.asRetriever({ k: 4 });
@@ -119,7 +128,28 @@ const askQuestion = async (question, isGeneral = false) => {
   conversationHistory.push(new HumanMessage(question));
   conversationHistory.push(new AIMessage(result.answer));
   
+  console.log("✅ RAG processing completed successfully");
   return result.answer;
+  
+  } catch (error) {
+    console.error("❌ Error in RAG processing:", error);
+    console.log("🔄 Falling back to general chat mode...");
+    
+    // Fallback to general chat if RAG fails
+    const generalPrompt = ChatPromptTemplate.fromMessages([
+      ["system", "You are a helpful and friendly AI assistant. Answer the user's question clearly and concisely, using Markdown for formatting if appropriate."],
+      new MessagesPlaceholder("chat_history"),
+      ["user", "{input}"],
+    ]);
+    const chain = generalPrompt.pipe(llm);
+    const result = await chain.invoke({
+      chat_history: conversationHistory,
+      input: question,
+    });
+    conversationHistory.push(new HumanMessage(question));
+    conversationHistory.push(new AIMessage(result.content));
+    return result.content;
+  }
 };
 
 module.exports = {

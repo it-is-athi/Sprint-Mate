@@ -34,6 +34,8 @@ const askQuestionController = async (req, res) => {
     // from the request body sent by the frontend.
     const { question, isGeneral } = req.body;
     
+    console.log(`🎯 RAG Controller - Question: "${question}", isGeneral: ${isGeneral}`);
+    
     // Basic validation
     if (!question || typeof question !== 'string' || question.trim() === '') {
         return res.status(400).json({ error: 'A non-empty question is required.' });
@@ -44,6 +46,7 @@ const askQuestionController = async (req, res) => {
         // The service will use this flag to decide which logic path to take.
         const answer = await ragService.askQuestion(question, isGeneral);
         
+        console.log(`✅ RAG Controller - Answer generated successfully`);
         // Send the answer back to the frontend
         res.status(200).json({ answer });
 
