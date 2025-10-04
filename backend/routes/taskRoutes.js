@@ -34,15 +34,17 @@ router.get('/today', protect, async (req, res) => {
     const startOfDay = new Date(targetDate);
     const endOfDay = new Date(targetDate);
     endOfDay.setDate(endOfDay.getDate() + 1);
-    
+
     const tasks = await Task.find({
       owner_id: req.user.id,
       date: {
         $gte: startOfDay,
         $lt: endOfDay
       }
-    }).sort({ date: 1 });
-    
+    })
+    .populate('schedule_id', 'schedule_title') // Populate schedule information
+    .sort({ date: 1 });
+
     res.json(tasks);
   } catch (error) {
     console.error('Error fetching today\'s tasks:', error);
@@ -75,19 +77,41 @@ router.patch('/:id/status', protect, async (req, res) => {
   try {
     const { status } = req.body;
     
-    if (!['pending', 'in-progress', 'completed'].includes(status)) {
-      return res.status(400).json({ message: 'Invalid status value' });
+    // Helper function to normalize status based on date
+    const normalizeStatus = (requestedStatus, taskDate) => {
+      const today = new Date();
+      const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const taskDateOnly = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+      
+      // For specific statuses that are valid in DB
+      if (['in-progress', 'completed'].includes(requestedStatus)) {
+        return requestedStatus;
+      }
+      
+      // For frontend computed statuses, convert to 'pending' but validate date logic
+      if (['pending', 'overdue', 'upcoming'].includes(requestedStatus)) {
+        return 'pending';
+      }
+      
+      // Default fallback
+      return 'pending';
+    };
+    
+    // Get the task first to access its date
+    const existingTask = await Task.findOne({ _id: req.params.id, owner_id: req.user.id });
+    
+    if (!existingTask) {
+      return res.status(404).json({ message: 'Task not found' });
     }
+    
+    // Normalize the status based on task date
+    const normalizedStatus = normalizeStatus(status, existingTask.date);
     
     const task = await Task.findOneAndUpdate(
       { _id: req.params.id, owner_id: req.user.id },
-      { status },
+      { status: normalizedStatus },
       { new: true }
     );
-    
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
-    }
     
     res.json(task);
   } catch (error) {

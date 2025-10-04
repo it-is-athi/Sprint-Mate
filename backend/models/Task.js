@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 
 const TaskSchema = new mongoose.Schema({
-  name: { type: String, required: true }, // e.g., "Day 1: Variables & Loops"
+  name: { type: String, required: true }, // e.g., "Introduction to Operating Systems", "Process Management Concepts"
   topic: { type: String }, // Unique portion/topic for the day
   date: { type: Date, required: true },
   description: { type: String },

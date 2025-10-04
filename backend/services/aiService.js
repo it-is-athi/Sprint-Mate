@@ -16,7 +16,7 @@ const JSON_STRUCTURE_GUIDE = `
 
   **Task JSON Structure (for the tasks_data array) - MUST match exactly:**
   {
-    "name": "string (required) - e.g., 'Day 1: Variables & Loops'",
+    "name": "string (required) - e.g., 'Introduction to Operating Systems', 'Process Management Concepts'",
     "topic": "string - Unique portion/topic for the day",
     "date": "string (required) - YYYY-MM-DD format",
     "description": "string - Detailed description of what to learn/do",
@@ -54,7 +54,7 @@ exports.generateScheduleFromForm = async (scheduleData) => {
        - **monthly**: Create a task for EACH MONTH in the date range
        - **once**: Create only 1 task
     5. **Task Fields (ALL REQUIRED):**
-       - **name**: Progressive names like "Day 1: Introduction to Basics", "Day 2: Advanced Concepts"
+       - **name**: Descriptive, natural task names like "Introduction to Operating Systems", "Process Management Concepts", "Memory Allocation Techniques"
        - **topic**: Specific learning topic for that session
        - **date**: Exact date for each task in YYYY-MM-DD format
        - **description**: Detailed learning objectives for that session
