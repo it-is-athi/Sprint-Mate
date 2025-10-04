@@ -135,9 +135,16 @@ function HomePage({ todaysTasks, updateTaskStatus, user }) {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h4 className={`font-semibold mb-1 ${isCompleted ? 'text-green-400 line-through' : 'text-white'}`}>
-                        {task.task_title || task.name}
-                      </h4>
+                      <div className="flex items-center space-x-2 mb-2">
+                        <h4 className={`font-semibold ${isCompleted ? 'text-green-400 line-through' : 'text-white'}`}>
+                          {task.task_title || task.name}
+                        </h4>
+                        {task.schedule_id && (
+                          <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full border border-yellow-500/30">
+                            {task.schedule_id.schedule_title}
+                          </span>
+                        )}
+                      </div>
                       <p className={`text-sm mb-2 ${isCompleted ? 'text-green-400/70' : 'text-gray-400'}`}>
                         {task.task_description || task.description}
                       </p>
@@ -152,25 +159,25 @@ function HomePage({ todaysTasks, updateTaskStatus, user }) {
                           {!isInProgress && (
                             <button
                               onClick={() => updateTaskStatus(task._id, 'in-progress')}
-                              className="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-500 text-white rounded-lg hover:from-blue-500 hover:to-blue-400 transition-all duration-200 text-sm font-medium"
+                              className="px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 text-sm font-medium"
                             >
-                              Start
+                              🚀 Start
                             </button>
                           )}
                           
                           {isInProgress && (
                             <button
                               onClick={() => updateTaskStatus(task._id, 'completed')}
-                              className="px-4 py-2 bg-gradient-to-r from-green-600 to-green-500 text-white rounded-lg hover:from-green-500 hover:to-green-400 transition-all duration-200 text-sm font-medium"
+                              className="px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 text-sm font-medium"
                             >
-                              Complete
+                              ✅ Complete
                             </button>
                           )}
                         </>
                       )}
                       
                       {isCompleted && (
-                        <div className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium text-center">
+                        <div className="px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg text-sm font-medium text-center">
                           ✅ Done
                         </div>
                       )}

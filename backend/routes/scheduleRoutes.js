@@ -109,6 +109,36 @@ router.patch('/:id/status', protect, async (req, res) => {
   }
 });
 
+// Update schedule title and description
+router.put('/:id', protect, async (req, res) => {
+  try {
+    const { schedule_title, description } = req.body;
+    
+    // Validate input
+    if (!schedule_title || schedule_title.trim() === '') {
+      return res.status(400).json({ message: 'Schedule title is required' });
+    }
+    
+    const schedule = await Schedule.findOneAndUpdate(
+      { _id: req.params.id, owner_id: req.user.id },
+      { 
+        schedule_title: schedule_title.trim(),
+        description: description ? description.trim() : ''
+      },
+      { new: true }
+    );
+    
+    if (!schedule) {
+      return res.status(404).json({ message: 'Schedule not found' });
+    }
+    
+    res.json(schedule);
+  } catch (error) {
+    console.error('Error updating schedule:', error);
+    res.status(500).json({ message: 'Failed to update schedule' });
+  }
+});
+
 // Delete a schedule and its tasks
 router.delete('/:id', protect, async (req, res) => {
   try {

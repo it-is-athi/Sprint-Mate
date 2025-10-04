@@ -6,6 +6,9 @@ const { protect } = require('../middlewares/authMiddleware');
 // Example of a protected route
 router.get('/me', protect, authController.getMe);
 
+// Update user profile route
+router.put('/profile', protect, authController.updateProfile);
+
 // Login route
 router.post('/login', authController.login);
 
