@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 
 // Helper function to determine task status
 const getTaskStatus = (task) => {
@@ -62,7 +62,7 @@ const getOriginalTaskStatus = (task) => {
   }
 };
 
-function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleClick, onCreateTaskClick }) {
+function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleClick, onCreateTaskClick, onDeleteTaskClick }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
@@ -166,12 +166,21 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                   const isInProgress = task.status === 'in-progress' || task.status === 'in_progress';
                   
                   return (
-                    <div key={task._id} className="min-w-0">
+                    <div key={task._id} className="min-w-0 group">
                       <div 
-                        className="bg-gray-900 rounded-xl p-4 border border-yellow-600/30 hover:border-yellow-500/50 transition-all duration-300 h-full cursor-pointer"
+                        className="bg-gray-900 rounded-xl p-4 border border-yellow-600/30 hover:border-yellow-500/50 transition-all duration-300 h-full cursor-pointer relative"
                         onClick={() => handleTaskClick(task)}
                       >
-                        <h4 className="font-semibold text-white mb-2 text-center text-sm">{task.task_title || task.name}</h4>
+                        {/* Delete Button - Top Right Corner */}
+                        <button
+                          onClick={(e) => onDeleteTaskClick(e, task)}
+                          className="absolute top-2 right-2 p-1.5 bg-red-500/20 text-red-400 border border-red-500/30 rounded-lg hover:bg-red-500/30 hover:border-red-400/50 hover:text-red-300 transition-all duration-200 opacity-0 group-hover:opacity-100"
+                          title="Delete Task"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                        
+                        <h4 className="font-semibold text-white mb-2 text-center text-sm pr-8">{task.task_title || task.name}</h4>
                         <p className="text-gray-400 text-xs mb-3 text-center line-clamp-2">{task.task_description || task.description}</p>
                         
                         <div className="flex flex-col items-center space-y-2 mb-3">

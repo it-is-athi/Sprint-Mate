@@ -14,6 +14,8 @@ function TasksContainer() {
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [taskToReschedule, setTaskToReschedule] = useState(null);
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false);
+  const [showDeleteTaskModal, setShowDeleteTaskModal] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState(null);
 
   useEffect(() => {
     if (scheduleId && user) {
@@ -83,6 +85,43 @@ function TasksContainer() {
 
   const handleCreateTaskClick = () => {
     setShowCreateTaskModal(true);
+  };
+
+  const handleDeleteTaskClick = (e, task) => {
+    e.stopPropagation(); // Prevent task modal from opening
+    setTaskToDelete(task);
+    setShowDeleteTaskModal(true);
+  };
+
+  const confirmDeleteTask = async () => {
+    if (!taskToDelete) return;
+    
+    try {
+      setLoading(true);
+      console.log('Deleting task:', taskToDelete._id);
+      await api.delete(`/tasks/${taskToDelete._id}`);
+      
+      // Refresh tasks list
+      await fetchScheduleTasks();
+      setShowDeleteTaskModal(false);
+      setTaskToDelete(null);
+      alert(`Task "${taskToDelete.name || taskToDelete.task_title}" deleted successfully!`);
+    } catch (error) {
+      console.error('Error deleting task:', error);
+      if (error.response?.status === 401) {
+        console.log('Authentication error, redirecting to login');
+        navigate('/');
+      } else {
+        alert(`Failed to delete task: ${error.response?.data?.message || error.message}`);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const cancelDeleteTask = () => {
+    setShowDeleteTaskModal(false);
+    setTaskToDelete(null);
   };
 
   const createTask = async (taskData) => {
@@ -158,6 +197,7 @@ function TasksContainer() {
         updateTaskStatus={updateTaskStatus}
         onRescheduleClick={handleRescheduleClick}
         onCreateTaskClick={handleCreateTaskClick}
+        onDeleteTaskClick={handleDeleteTaskClick}
       />
       
       {/* Reschedule Modal */}
@@ -284,6 +324,44 @@ function TasksContainer() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Task Confirmation Modal */}
+      {showDeleteTaskModal && taskToDelete && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded-xl border border-red-600/30 w-[400px] max-w-[90vw]">
+            <h3 className="text-xl font-semibold text-white mb-4">Delete Task</h3>
+            
+            <div className="mb-6">
+              <p className="text-gray-300 mb-2">
+                Are you sure you want to delete this task:
+              </p>
+              <p className="text-yellow-400 font-semibold text-lg">
+                "{taskToDelete.name || taskToDelete.task_title}"?
+              </p>
+              <p className="text-red-400 text-sm mt-3">
+                ⚠️ This action cannot be undone.
+              </p>
+            </div>
+
+            <div className="flex space-x-3">
+              <button 
+                type="button"
+                onClick={cancelDeleteTask}
+                className="flex-1 px-4 py-3 bg-gray-700 text-white rounded-lg hover:bg-gray-600 transition-all duration-200"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDeleteTask}
+                disabled={loading}
+                className="flex-1 px-4 py-3 bg-gradient-to-r from-red-600 to-red-500 text-white rounded-lg hover:from-red-500 hover:to-red-400 transition-all duration-200 font-semibold disabled:opacity-50"
+              >
+                {loading ? 'Deleting...' : 'Yes, Delete'}
+              </button>
+            </div>
           </div>
         </div>
       )}
