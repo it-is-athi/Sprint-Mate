@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.font-orbitron {
+  font-family: 'Orbitron', 'Montserrat', 'Poppins', sans-serif;
+}
+.text-gold-glow {
+  color: #FFD700;
+  text-shadow: 0 0 12px #FFD700, 0 0 24px #FFB300;
+}
+.bg-gold-glow {
+  background: radial-gradient(circle, #FFD700 60%, #18181C 100%);
+}
+.shadow-gold-glow {
+  box-shadow: 0 0 24px 4px #FFD70044, 0 2px 8px #000A;
+}
+.shadow-gold-glow-strong {
+  box-shadow: 0 0 32px 8px #FFD700CC, 0 0 8px #FFB300;
+}
+.bg-glass {
+  background: rgba(30,30,40,0.85);
+  backdrop-filter: blur(12px);
+}
+.border-gold {
+  border-color: #FFD700;
+}
+.accent-gold {
+  accent-color: #FFD700;
+}
+.drop-shadow-gold-glow {
+  filter: drop-shadow(0 0 8px #FFD700);
+}

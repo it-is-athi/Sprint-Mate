@@ -62,10 +62,10 @@ function DashboardLayout() {
           <ul className="space-y-2">
             {navigationItems.map((item) => {
               const Icon = item.icon;
-              const isActive = 
+              const isActive =
                 (item.path === '/dashboard' && currentPath === '/dashboard') ||
                 (item.path !== '/dashboard' && currentPath.startsWith(item.path));
-              
+
               return (
                 <li key={item.id}>
                   <button
@@ -88,24 +88,36 @@ function DashboardLayout() {
 
       {/* Main Content - Add left margin for fixed sidebar */}
       <div className="ml-64 flex flex-col min-h-screen">
-        {/* Top Bar */}
-        <header className="bg-gray-900 border-b border-yellow-600/30 p-6">
-          <div className="flex items-center justify-between">
+        {/* Top Bar with updated greeting box */}
+        <header
+          className="relative bg-gray-900 border-b border-yellow-600/30 p-6 rounded-lg"
+          style={{
+            backgroundImage: `url('https://i.pinimg.com/736x/a2/c4/d6/a2c4d6902eb3111ddf5ef86bb18250e3.jpg')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            minHeight: '120px', // slightly bigger box
+          }}
+        >
+          {/* Overlay for readability */}
+          <div className="absolute inset-0 bg-black/50 rounded-lg pointer-events-none"></div>
+
+          <div className="relative flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-3xl font-serif font-bold text-white drop-shadow-lg">
                 {getPageTitle()}
               </h1>
-              <p className="text-gray-400">
+              <p className="text-gray-200 drop-shadow-sm">
                 {getPageSubtitle()}
               </p>
             </div>
-            
+
             {/* User Info & Logout - Top Right */}
             <div className="flex items-center space-x-4">
               <div className="flex items-center space-x-3">
                 <div className="w-8 h-8 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-full flex items-center justify-center">
                   <User className="w-4 h-4 text-black" />
                 </div>
+                {/* Dynamic username */}
                 <span className="text-sm text-gray-300">{user?.name || 'User'}</span>
               </div>
               <button

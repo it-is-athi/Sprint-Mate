@@ -1,214 +1,346 @@
-import React from 'react';
-import { Clock, CheckCircle, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { Clock, CheckCircle, Calendar, MoreVertical, ArrowUpRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
+import axios from '../api/axios';
 
-function HomePage({ todaysTasks, updateTaskStatus, user }) {
+function HomePage({ todaysTasks = [], updateTaskStatus, user }) {
   const navigate = useNavigate();
-  const completedTasks = todaysTasks?.filter(task => task.status === 'completed') || [];
-  const pendingTasks = todaysTasks?.filter(task => task.status !== 'completed') || [];
-  const completionRate = todaysTasks?.length > 0 ? Math.round((completedTasks.length / todaysTasks.length) * 100) : 0;
 
-  const getTaskStatus = (task) => {
-    if (task.status === 'completed') {
-      return {
-        label: 'Completed',
-        color: 'bg-green-500/20 text-green-400 border-green-500/30'
-      };
-    }
-    
-    const today = new Date();
-    const taskDate = new Date(task.date);
-    
-    // Normalize dates to compare only the date part (ignore time)
-    const todayDateOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const taskDateOnly = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
-    
-    const isOverdue = taskDateOnly < todayDateOnly && task.status !== 'completed';
-    const isToday = taskDateOnly.getTime() === todayDateOnly.getTime();
-    const isUpcoming = taskDateOnly > todayDateOnly;
-    
-    if (isOverdue) {
-      return {
-        label: 'Overdue',
-        color: 'bg-red-500/20 text-red-400 border-red-500/30'
-      };
-    } else if (isToday && task.status !== 'completed') {
-      return {
-        label: 'Pending',
-        color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-      };
-    } else if (isToday && task.status === 'completed') {
-      return {
-        label: 'Completed Today',
-        color: 'bg-green-500/20 text-green-400 border-green-500/30'
-      };
-    } else if (isUpcoming) {
-      return {
-        label: 'Upcoming',
-        color: 'bg-blue-500/20 text-blue-400 border-blue-500/30'
-      };
-    } else {
-      return { 
-        label: 'Pending',
-        color: 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-      };
-    }
-  };
+  // Filter tasks for display
+  const pendingTodaysTasks = todaysTasks.filter(task => task.status !== 'completed');
+  const completedTodaysTasks = todaysTasks.filter(task => task.status === 'completed');
 
-  const handleStudyWithAI = (task) => {
-    navigate('/dashboard/chat', {
-      state: {
-        studyTask: {
-          task: task,
-          scheduleName: task.schedule_id?.schedule_title || 'Unknown Schedule'
-        }
-      }
-    });
-  };
+  // Calculate completion rate
+  const completionRate = todaysTasks.length > 0
+    ? Math.round((completedTodaysTasks.length / todaysTasks.length) * 100)
+    : 0;
 
-  return (
-    <div className="space-y-6">
-      {/* Welcome Section */}
-      <div className="bg-gradient-to-r from-yellow-600/10 to-amber-600/10 rounded-xl p-6 border border-yellow-600/30">
-        <h2 className="text-2xl font-bold text-white mb-2">Good day, {user?.name || 'User'}! 👋</h2>
-        <p className="text-gray-300">Ready to tackle your goals today? Let's make it productive!</p>
+  const dailyAffirmations = [
+    "Every step forward is progress.",
+    "Learning is your superpower.",
+    "Consistency is key to growth.",
+    "Believe in your abilities.",
+    "Small efforts build great outcomes.",
+    "Your dedication will pay off.",
+    "Stay curious and keep learning.",
+    "Challenges make you stronger.",
+    "Progress over perfection.",
+    "You are capable of amazing things.",
+  ];
+
+  const today = new Date();
+  const affirmIndex = today.getDate() % dailyAffirmations.length;
+  const todayAffirmation = dailyAffirmations[affirmIndex];
+
+  // --- Sun Progress Component ---
+  const SunProgress = ({ progress }) => {
+    const safeProgress = Math.min(100, Math.max(0, progress));
+    
+    // Dynamic sun properties based on progress
+    const sunSize = 60 + (safeProgress / 100) * 80; // Grows from 60px to 140px
+    const sunOpacity = 0.4 + (safeProgress / 100) * 0.6; // Increases from 40% to 100%
+    const sunVerticalPosition = 40 + ((100 - safeProgress) / 100) * 160; // Starts near bottom (200px) and rises to 40px from top
+    
+    // Generate star dots (only visible at low progress)
+    const starOpacity = Math.max(0, 1 - (safeProgress / 30)); // Fade out by 30% progress
+    const starDots = Array(20).fill(0).map((_, i) => ({
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 60}%`,
+      size: Math.random() * 2 + 1
+    }));
+
+    return (
+      <div 
+        className="relative rounded-2xl overflow-hidden shadow-xl flex flex-col items-center justify-center w-[280px] h-[280px]"
+        style={{
+          background: `linear-gradient(180deg, 
+            ${safeProgress < 50 
+              ? `rgb(16, 24, 50) ${100 - safeProgress * 2}%, rgb(47, 37, 78) 100%`
+              : `rgb(47, 37, 78) ${100 - safeProgress}%, rgb(255, 200, 120) 100%`
+            })`,
+          isolation: 'isolate',
+          transition: 'all 1s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+      >
+        {/* Stars */}
+        {starDots.map((star, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full bg-white"
+            style={{
+              left: star.left,
+              top: star.top,
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              opacity: starOpacity,
+              transition: 'opacity 1s ease-out',
+            }}
+          />
+        ))}
+
+        {/* Sun with Glow Effect */}
+        <div
+          className="absolute left-1/2 -translate-x-1/2 z-10"
+          style={{
+            width: `${sunSize}px`,
+            height: `${sunSize}px`,
+            top: `${sunVerticalPosition}px`,
+            transition: 'all 1.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          {/* Sun Glow */}
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: `radial-gradient(circle at center,
+                rgba(255, 200, 120, ${sunOpacity * 0.7}) 0%,
+                rgba(234, 179, 8, ${sunOpacity * 0.5}) 40%,
+                rgba(234, 179, 8, 0) 70%
+              )`,
+              transform: 'scale(1.5)',
+              transition: 'all 1s ease-out',
+            }}
+          />
+          {/* Sun Core */}
+          <div
+            className="absolute inset-0 rounded-full"
+            style={{
+              background: `radial-gradient(circle at center,
+                rgba(255, 220, 150, ${sunOpacity}) 0%,
+                rgba(234, 179, 8, ${sunOpacity}) 60%,
+                rgba(234, 179, 8, ${sunOpacity * 0.8}) 100%
+              )`,
+              boxShadow: `
+                0 0 ${sunSize/3}px rgba(234, 179, 8, ${sunOpacity * 0.3}),
+                0 0 ${sunSize/2}px rgba(234, 179, 8, ${sunOpacity * 0.2})
+              `,
+              transition: 'all 1s ease-out',
+            }}
+          />
+        </div>
+
+        {/* Mountain Range with Gradient Overlay */}
+        <div className="absolute inset-x-0 bottom-0 z-20">
+          <div 
+            className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"
+            style={{
+              height: '120px',
+            }}
+          />
+          <div 
+            className="w-full h-[120px] bg-black"
+            style={{
+              clipPath: 'polygon(0% 100%, 0% 60%, 15% 65%, 25% 45%, 35% 55%, 45% 35%, 55% 50%, 65% 25%, 75% 35%, 85% 15%, 100% 45%, 100% 100%)',
+              opacity: 0.85,
+            }}
+          />
+        </div>
+
+        {/* Container Border */}
+        <div 
+          className="absolute inset-0 z-30"
+          style={{
+            border: '1px solid rgba(234, 179, 8, 0.3)',
+            borderRadius: '1rem',
+            boxShadow: 'inset 0 0 20px rgba(0, 0, 0, 0.3)',
+          }}
+        />
+
+        {/* Heading */}
+        <h3
+          className="absolute top-4 text-lg tracking-wide z-40 bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500"
+          style={{ 
+            fontFamily: "'Bodoni Moda', serif",
+            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
+          }}
+        >
+          Daily Progress
+        </h3>
+
+        {/* Percentage Text */}
+        <span
+          className="relative text-5xl font-bold z-40 text-white"
+          style={{ 
+            fontFamily: "'Bodoni Moda', serif",
+            textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)',
+          }}
+        >
+          {safeProgress}%
+        </span>
       </div>
+    );
+  };
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Today's Progress */}
-        <div className="bg-gray-900 rounded-xl p-6 border border-yellow-600/30">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Today's Progress</h3>
-            <TrendingUp className="w-6 h-6 text-yellow-400" />
+  // --- Stats Card Component ---
+  const cardBg =
+    "url('https://i.pinimg.com/1200x/90/d2/66/90d266fb509642471f06efd568dd460e.jpg')";
+
+  // Task Card Component
+const TaskCard = ({ task, onStatusChange, onNavigate }) => (
+    <div 
+      className="relative group rounded-lg overflow-hidden border border-yellow-500/20 hover:border-yellow-500/40 backdrop-blur-sm transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-yellow-500/10 hover:-translate-y-0.5"
+      onClick={onNavigate}
+      style={{
+        background: 'linear-gradient(45deg, rgba(20, 20, 20, 0.5), rgba(30, 30, 30, 0.5))'
+      }}
+    >
+      <div className="p-4 flex items-center justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h4 className="text-white font-medium truncate">{task.title}</h4>
+            <ArrowUpRight className="w-4 h-4 text-yellow-500/50 group-hover:text-yellow-500 transition-colors" />
           </div>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-400">Completion Rate</span>
-              <span className="text-2xl font-bold text-yellow-400">{completionRate}%</span>
-            </div>
-            <div className="w-full bg-gray-700 rounded-full h-2">
-              <div 
-                className="bg-gradient-to-r from-yellow-500 to-amber-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${completionRate}%` }}
-              ></div>
-            </div>
-            <p className="text-sm text-gray-500">
-              {completedTasks.length} of {todaysTasks?.length || 0} tasks completed
+          <div className="flex items-center gap-3 mt-1">
+            <p className="text-gray-400 text-sm">
+              {new Date(task.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </p>
+            {task.schedule_id?.schedule_title && (
+              <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+                {task.schedule_id.schedule_title}
+              </span>
+            )}
           </div>
+        </div>        <div className="flex items-center gap-3">
+          <button
+            onClick={onStatusChange}
+            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
+              task.status === 'completed'
+                ? 'bg-yellow-500 border-yellow-600'
+                : 'border-gray-600 hover:border-yellow-500'
+            }`}
+          >
+            {task.status === 'completed' && (
+              <CheckCircle className="w-4 h-4 text-black" />
+            )}
+          </button>
+          
+          <button className="text-gray-400 hover:text-white transition-colors duration-200">
+            <MoreVertical className="w-5 h-5" />
+          </button>
         </div>
+      </div>
+    </div>
+  );
 
-        {/* Tasks Completed */}
-        <div className="bg-gray-900 rounded-xl p-6 border border-green-600/30">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Completed</h3>
-            <CheckCircle className="w-6 h-6 text-green-400" />
-          </div>
-          <div className="text-3xl font-bold text-green-400 mb-2">{completedTasks.length}</div>
-          <p className="text-sm text-gray-400">Tasks finished today</p>
-        </div>
+  // --- Main Page Layout ---
+  return (
+    <div
+      className="min-h-screen space-y-6 p-6 relative"
+      style={{
+        backgroundColor: "#0a0a0a",
+        backgroundImage: `
+          linear-gradient(to right, rgba(234, 179, 8, 0.1) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(234, 179, 8, 0.1) 1px, transparent 1px)
+        `,
+        backgroundSize: "50px 50px",
+        backgroundPosition: "0 0"
+      }}
+    >
+      {/* Ambient glow effects */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-yellow-500/10 rounded-full blur-[128px]" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-[128px]" />
+      </div>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;700&display=swap"
+        rel="stylesheet"
+      />
 
-        {/* Pending Tasks */}
-        <div className="bg-gray-900 rounded-xl p-6 border border-orange-600/30">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-white">Pending</h3>
-            <Clock className="w-6 h-6 text-orange-400" />
-          </div>
-          <div className="text-3xl font-bold text-orange-400 mb-2">{pendingTasks.length}</div>
-          <p className="text-sm text-gray-400">Tasks remaining</p>
+      {/* Top Row: Sun Progress + Affirmation */}
+      <div className="flex flex-col md:flex-row items-stretch justify-between gap-6">
+        <SunProgress progress={completionRate} />
+
+        {/* Daily Affirmation Box */}
+        <div className="relative rounded-2xl overflow-hidden flex items-center justify-center text-center p-8 w-full md:flex-1 shadow-xl border border-yellow-400/20 min-h-[280px]">
+          {/* Background Video */}
+          <video
+            src="https://v1.pinimg.com/videos/mc/720p/03/7b/d8/037bd82ba8b78d482c0c1459a2bbd1a6.mp4"
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          />
+          {/* Overlay Blur */}
+          <div className="absolute inset-0 bg-black/25 backdrop-blur-sm rounded-2xl"></div>
+
+          {/* Affirmation Text */}
+          <h2
+            className="relative text-white text-2xl md:text-3xl lg:text-4xl leading-snug drop-shadow-lg max-w-2xl text-left"
+            style={{
+              fontFamily: "'Bodoni Moda', serif",
+            }}
+          >
+            {todayAffirmation}
+          </h2>
         </div>
       </div>
 
-      {/* Today's Tasks */}
-      <div className="bg-gray-900 rounded-xl p-6 border border-yellow-600/30">
-        <h3 className="text-xl font-semibold text-white mb-6">Today's Tasks</h3>
-        
-        {!todaysTasks || todaysTasks.length === 0 ? (
-          <div className="text-center py-12">
-            <CheckCircle className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-            <p className="text-gray-400 text-lg mb-2">No tasks scheduled for today</p>
-            <p className="text-gray-500 text-sm">Enjoy your free time or plan some new tasks!</p>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {todaysTasks.map((task) => {
-              const taskStatus = getTaskStatus(task);
-              const isCompleted = task.status === 'completed';
-              const isInProgress = task.status === 'in-progress' || task.status === 'in_progress';
-              
-              return (
-                <div
+      {/* Task Lists Section */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Today's Pending Tasks */}
+        <div className="relative rounded-2xl overflow-hidden border border-yellow-500/30 bg-gray-900/60 backdrop-blur-sm shadow-xl p-6 group hover:border-yellow-500/50 transition-all duration-300">
+          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+          <h3 className="relative text-xl font-serif text-white mb-4 flex items-center gap-2">
+            <span className="p-2 rounded-lg bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors duration-300">
+              <Calendar className="w-5 h-5" />
+            </span>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500">
+              Today's Tasks
+            </span>
+            <span className="text-sm text-yellow-500/70 ml-2 bg-yellow-500/10 px-2 py-1 rounded-full">
+              ({pendingTodaysTasks.length} pending)
+            </span>
+          </h3>
+          
+          <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
+            {pendingTodaysTasks.length === 0 ? (
+              <p className="text-gray-400">No pending tasks for today</p>
+            ) : (
+              pendingTodaysTasks.map(task => (
+                <TaskCard 
                   key={task._id}
-                  className={`p-4 rounded-lg border transition-all duration-200 ${
-                    isCompleted 
-                      ? 'bg-green-500/10 border-green-500/30' 
-                      : 'bg-gray-800 border-gray-700 hover:border-yellow-600/50'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h4 className={`font-semibold ${isCompleted ? 'text-green-400 line-through' : 'text-white'}`}>
-                          {task.task_title || task.name}
-                        </h4>
-                        {task.schedule_id && (
-                          <span className="px-2 py-1 bg-yellow-500/20 text-yellow-400 text-xs rounded-full border border-yellow-500/30">
-                            {task.schedule_id.schedule_title}
-                          </span>
-                        )}
-                      </div>
-                      <p className={`text-sm mb-2 ${isCompleted ? 'text-green-400/70' : 'text-gray-400'}`}>
-                        {task.task_description || task.description}
-                      </p>
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${taskStatus.color}`}>
-                        {taskStatus.label}
-                      </span>
-                    </div>
-                    
-                    <div className="flex flex-col space-y-2 ml-4">
-                      {/* Study with AI Button - Always visible */}
-                      <button
-                        onClick={() => handleStudyWithAI(task)}
-                        className="px-4 py-2 bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 text-purple-100 rounded-lg hover:bg-purple-500/30 hover:border-purple-400/50 transition-all duration-200 text-sm font-medium flex items-center justify-center gap-2"
-                      >
-                        🧠 Study with AI
-                      </button>
-                      
-                      {!isCompleted && (
-                        <>
-                          {!isInProgress && (
-                            <button
-                              onClick={() => updateTaskStatus(task._id, 'in-progress')}
-                              className="px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 text-sm font-medium"
-                            >
-                              🚀 Start
-                            </button>
-                          )}
-                          
-                          {isInProgress && (
-                            <button
-                              onClick={() => updateTaskStatus(task._id, 'completed')}
-                              className="px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 text-sm font-medium"
-                            >
-                              ✅ Complete
-                            </button>
-                          )}
-                        </>
-                      )}
-                      
-                      {isCompleted && (
-                        <div className="px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg text-sm font-medium text-center">
-                          ✅ Done
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                  task={task}
+                  onNavigate={() => task.schedule_id && navigate(`/dashboard/schedules/tasks/${task.schedule_id._id}`)}
+                  onStatusChange={(e) => {
+                    e.stopPropagation(); // Prevent navigation
+                    updateTaskStatus(task._id, 'completed');
+                  }}
+                />
+              ))
+            )}
           </div>
-        )}
+        </div>
+
+        {/* Completed Tasks */}
+        <div className="relative rounded-2xl overflow-hidden border border-yellow-500/30 bg-gray-900/60 backdrop-blur-sm shadow-xl p-6">
+          <h3 className="text-xl font-serif mb-4 flex items-center gap-2">
+            <span className="p-2 rounded-lg bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors duration-300">
+              <CheckCircle className="w-5 h-5 text-yellow-500" />
+            </span>
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500">
+              Completed Tasks
+            </span>
+          </h3>
+          
+          <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
+            {completedTodaysTasks.length === 0 ? (
+              <p className="text-gray-400">No completed tasks today</p>
+            ) : (
+              completedTodaysTasks.map(task => (
+                <TaskCard 
+                  key={task._id}
+                  task={task}
+                  onNavigate={() => task.schedule_id && navigate(`/dashboard/schedules/tasks/${task.schedule_id._id}`)}
+                  onStatusChange={(e) => {
+                    e.stopPropagation(); // Prevent navigation
+                    updateTaskStatus(task._id, 'pending');
+                  }}
+                />
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );
