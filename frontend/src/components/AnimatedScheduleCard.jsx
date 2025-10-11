@@ -148,7 +148,7 @@ const AnimatedScheduleCard = ({
               </div>
             ) : (
               <>
-                <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500 mb-2 group-hover:from-yellow-100 group-hover:to-yellow-400 transition-colors">
+                <h3 className="text-xl font-serif bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500 mb-2 group-hover:from-yellow-100 group-hover:to-yellow-400 transition-colors">
                   {schedule.schedule_title}
                 </h3>
                 <p className="text-gray-400 text-sm leading-relaxed line-clamp-2">{schedule.description}</p>

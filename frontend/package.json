@@ -10,17 +10,19 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@react-three/fiber": "^9.3.0",
     "@supabase/supabase-js": "^2.57.4",
     "axios": "^1.11.0",
     "caniuse-lite": "^1.0.30001741",
     "gsap": "^3.13.0",
     "lucide-react": "^0.344.0",
-    "react": "^18.3.1",
+    "react": "^19.0.0-rc.1",
     "react-animated-progress-bar": "^1.1.2",
-    "react-dom": "^18.3.1",
+    "react-dom": "^19.0.0-rc.1",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.8.2",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "three": "^0.180.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.9.1",

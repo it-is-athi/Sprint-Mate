@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { Zap, Mail } from 'lucide-react';
+import Silk from './Silk';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -27,17 +28,13 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-900">
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop')`
-        }}
-      >
-        <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden">
+      {/* Animated Silk Background */}
+      <div className="absolute inset-0 w-full h-full z-0">
+        <Silk speed={5} scale={1} color="#F6A314" noiseIntensity={1.5} rotation={0} />
       </div>
       {/* Main Content */}
-      <div className="w-full max-w-md bg-black bg-opacity-40 backdrop-blur-md rounded-3xl border border-white border-opacity-20 shadow-2xl p-8">
+      <div className="w-full max-w-md bg-white/10 rounded-3xl border border-white/20 shadow-2xl p-8 relative z-10">
         <div className="flex flex-col items-center mb-6">
           <Zap className="w-10 h-10 text-emerald-500 mb-2" />
           <h2 className="text-white text-2xl font-bold mb-2">Forgot Password</h2>
@@ -68,7 +65,7 @@ export default function ForgotPassword() {
         </form>
         <div className="mt-6 text-center">
           <button
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/login')}
             className="text-gray-300 hover:text-emerald-400 font-medium transition-colors duration-200"
           >
             Back to Login
