@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '../context/ThemeContext'; // Import useTheme
 
 // Helper function to determine task status
 const getTaskStatus = (task) => {
@@ -68,7 +69,8 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showTaskModal, setShowTaskModal] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
-  
+  const { theme } = useTheme(); // Get theme
+
   // Show exactly 3 cards for better spacing and arrow visibility
   const cardsToShow = 3;
   const totalWindows = Math.ceil(tasks.length / cardsToShow);
@@ -109,19 +111,26 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
   const endIndex = startIndex + cardsToShow;
   const visibleTasks = tasks.slice(startIndex, endIndex);
 
+  const lightTheme = theme === 'light';
+  const rootBg = lightTheme ? 'bg-gradient-to-br from-yellow-50 via-yellow-100 to-amber-100' : 'bg-black';
+  const cardBg = lightTheme ? 'bg-white/80' : 'bg-gray-900';
+  const textColor = lightTheme ? 'text-gray-800' : 'text-white';
+  const subTextColor = lightTheme ? 'text-gray-600' : 'text-gray-400';
+  const borderColor = lightTheme ? 'border-yellow-300/70' : 'border-yellow-600/30';
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${rootBg}`}>
       {/* Schedule Info */}
-      <div className="bg-gray-900 rounded-xl p-6 border border-yellow-600/30">
+      <div className={`${cardBg} rounded-xl p-6 border ${borderColor}`}>
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className="text-xl font-semibold text-yellow-400 mb-2">{schedule.schedule_title}</h3>
-            <p className="text-gray-400">{schedule.description}</p>
+            <h3 className={`text-xl font-semibold mb-2 ${lightTheme ? 'text-yellow-900' : 'text-yellow-400'}`}>{schedule.schedule_title}</h3>
+            <p className={subTextColor}>{schedule.description}</p>
             <div className="flex items-center space-x-4 mt-4">
-              <span className="text-sm text-gray-500">
+              <span className={`text-sm ${lightTheme ? 'text-gray-500' : 'text-gray-500'}`}>
                 <strong>Pattern:</strong> {schedule.repeat_pattern}
               </span>
-              <span className="text-sm text-gray-500">
+              <span className={`text-sm ${lightTheme ? 'text-gray-500' : 'text-gray-500'}`}>
                 <strong>Status:</strong> {schedule.status}
               </span>
             </div>
@@ -130,7 +139,7 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
           {/* Create Task Button */}
           <button
             onClick={onCreateTaskClick}
-            className="flex items-center space-x-2 bg-gradient-to-r from-yellow-600 to-amber-600 text-black px-4 py-2 rounded-lg font-semibold hover:from-yellow-500 hover:to-amber-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02]"
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-[1.02] ${lightTheme ? 'bg-yellow-400 hover:bg-yellow-500 text-black' : 'bg-gradient-to-r from-yellow-600 to-amber-600 text-black hover:from-yellow-500 hover:to-amber-500'}`}
           >
             <span className="text-lg">+</span>
             <span>Add Task</span>
@@ -147,7 +156,7 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
         <div className="space-y-4">
           {/* Header with Full Window Info */}
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className={`text-lg font-semibold ${textColor}`}>
               Tasks ({tasks.length})
             </h3>
             {totalWindows > 1 && (
@@ -182,7 +191,7 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                   return (
                     <div key={task._id} className="min-w-0 group">
                       <div 
-                        className="bg-gray-900 rounded-xl p-4 border border-yellow-600/30 hover:border-yellow-500/50 transition-all duration-300 h-full cursor-pointer relative"
+                        className={`${cardBg} rounded-xl p-4 border ${borderColor} hover:border-yellow-500/50 transition-all duration-300 h-full cursor-pointer relative`}
                         onClick={() => handleTaskClick(task)}
                       >
                         {/* Delete Button - Top Right Corner */}
@@ -194,8 +203,8 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                           <Trash2 className="w-3 h-3" />
                         </button>
                         
-                        <h4 className="font-semibold text-white mb-2 text-center text-sm pr-8">{task.task_title || task.name}</h4>
-                        <p className="text-gray-400 text-xs mb-3 text-center line-clamp-2">{task.task_description || task.description}</p>
+                        <h4 className={`font-semibold mb-2 text-center text-sm pr-8 ${textColor}`}>{task.task_title || task.name}</h4>
+                        <p className={`${subTextColor} text-xs mb-3 text-center line-clamp-2`}>{task.task_description || task.description}</p>
                         
                         <div className="flex flex-col items-center space-y-2 mb-3">
                           <span className={`px-2 py-1 rounded-full text-xs font-medium ${taskStatus.color}`}>
@@ -332,7 +341,7 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
       {/* Task Detail Modal */}
       {showTaskModal && selectedTask && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-gray-900 p-6 rounded-xl border border-yellow-600/30 max-w-2xl w-[90vw] max-h-[80vh] overflow-auto">
+          <div className={`${cardBg} p-6 rounded-xl border ${borderColor} max-w-2xl w-[90vw] max-h-[80vh] overflow-auto`}>
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-semibold text-white pr-4">
                 {selectedTask.task_title || selectedTask.name}

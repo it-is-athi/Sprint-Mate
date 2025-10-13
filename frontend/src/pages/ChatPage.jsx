@@ -181,7 +181,11 @@ Please teach me about this topic with clear explanations and practical examples.
   const lightTheme = theme === 'light';
 
   return (
-    <div className={`relative flex flex-col h-full w-full overflow-hidden ${lightTheme ? 'bg-white' : 'bg-black'}`}>
+    <div className={`relative flex flex-col h-full w-full overflow-hidden ${lightTheme ? 'bg-white' : 'bg-black'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;700&display=swap"
+        rel="stylesheet"
+      />
       {/* Aurora Background */}
       <div className="absolute inset-0 z-0 opacity-70">
         <Aurora 
