@@ -3,12 +3,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm'; // <-- 1. IMPORT THE GFM PLUGIN
-import { Send, FileText, XCircle } from 'lucide-react';
+import remarkGfm from 'remark-gfm';
+import { Send, FileText, XCircle, BrainCircuit, FileUp } from 'lucide-react'; // Updated icons
 import { useLocation } from 'react-router-dom';
+import Aurora from '../components/Aurora'; // Import the Aurora component
+import { useTheme } from '../context/ThemeContext'; // Import theme context
+import SplitText from '../components/SplitText'; // Import SplitText component
 
 function ChatPage() {
-  // ... (keep all your existing state and functions: useState, useEffect, handleFileChange, etc.)
+  const { theme } = useTheme(); // Get current theme
   const [file, setFile] = useState(null);
   const [question, setQuestion] = useState('');
   const [chatHistory, setChatHistory] = useState([]);
@@ -175,225 +178,208 @@ Please teach me about this topic with clear explanations and practical examples.
     setChatHistory([]);
   };
 
+  const lightTheme = theme === 'light';
 
   return (
-    <div className="flex flex-col h-full w-full bg-gray-900">
-      {/* Simple Header with Mode Selection */}
-      <div className="flex-shrink-0 mb-6">
-        <div className="p-6">
-          {/* Simple Mode Toggle */}
-          <div className="flex gap-4">
-            <button
-              onClick={() => {
-                setIsRagMode(false);
-                setChatHistory([]);
-                setFile(null);
-                setUploadStatus('');
-                setStudyProcessed(false); // Reset study processing flag
-                studyTaskRef.current = null; // Reset study task ref
-              }}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 ${
-                !isRagMode 
-                  ? 'bg-yellow-500 text-white shadow-lg transform scale-105' 
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              💬 General Chat
-            </button>
-            <button
-              onClick={() => {
-                setIsRagMode(true);
-                setChatHistory([]);
-                setFile(null);
-                setUploadStatus('');
-                setStudyProcessed(false); // Reset study processing flag
-                studyTaskRef.current = null; // Reset study task ref
-              }}
-              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-300 flex items-center gap-2 ${
-                isRagMode 
-                  ? 'bg-yellow-500 text-white shadow-lg transform scale-105' 
-                  : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-              }`}
-            >
-              📄 Chat with PDF
-            </button>
-          </div>
-        </div>
+    <div className={`relative flex flex-col h-full w-full overflow-hidden ${lightTheme ? 'bg-white' : 'bg-black'}`}>
+      {/* Aurora Background */}
+      <div className="absolute inset-0 z-0 opacity-70">
+        <Aurora 
+          isLightMode={lightTheme}
+          colorStops={lightTheme ? ['#FFFF00', '#FFA500', '#FFFF00'] : ['#FFEA00', '#FFBF00', '#FFEA00']} 
+        />
       </div>
 
-      {/* Main Chat Interface */}
-      <div className="flex-grow flex flex-col min-h-0 px-6">
-        {/* Chat Messages Area */}
-        <div className="flex-grow overflow-y-auto mb-6 space-y-6 max-h-96 pr-2">
-          {/* Upload Status Messages */}
-          {isRagMode && uploadStatus && (
-            <div className="flex justify-center mb-4">
-              <div className="bg-blue-500/20 backdrop-blur-sm text-blue-200 px-4 py-2 rounded-lg text-sm">
-                {uploadStatus}
-              </div>
+      {/* Main Content */}
+      <div className="relative z-10 flex flex-col h-full w-full p-6">
+        {/* Header with Mode Selection */}
+        <div className="flex-shrink-0 mb-6">
+          <div className={`p-2 rounded-xl border w-auto ${lightTheme ? 'bg-white border-gray-300' : 'bg-black/20 border-white/10'} backdrop-blur-md`}>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setIsRagMode(false);
+                  setChatHistory([]);
+                  setFile(null);
+                  setUploadStatus('');
+                  setStudyProcessed(false);
+                  studyTaskRef.current = null;
+                }}
+                className={`px-8 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 ${
+                  !isRagMode 
+                    ? (lightTheme ? 'bg-yellow-500 text-white shadow-lg' : 'bg-orange-500 text-white shadow-lg shadow-orange-500/30')
+                    : (lightTheme ? 'bg-transparent text-gray-700 hover:bg-black/10' : 'bg-transparent text-gray-300 hover:bg-white/10')
+                }`}
+              >
+                <BrainCircuit className={`w-5 h-5 ${lightTheme ? 'text-white' : 'text-yellow-200'}`} />
+                General
+              </button>
+              <button
+                onClick={() => {
+                  setIsRagMode(true);
+                  setChatHistory([]);
+                  setFile(null);
+                  setUploadStatus('');
+                  setStudyProcessed(false);
+                  studyTaskRef.current = null;
+                }}
+                className={`px-8 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap ${
+                  isRagMode 
+                    ? (lightTheme ? 'bg-yellow-500 text-white shadow-lg' : 'bg-orange-500 text-white shadow-lg shadow-orange-500/30')
+                    : (lightTheme ? 'bg-transparent text-gray-700 hover:bg-black/10' : 'bg-transparent text-gray-300 hover:bg-white/10')
+                }`}
+              >
+                <FileText className="w-5 h-5" />
+                With PDF
+              </button>
             </div>
-          )}
-          
-          {/* PDF Processing Complete Message */}
-          {isRagMode && uploadStatus.includes('processed successfully') && (
-            <div className="flex justify-center mb-4">
-              <div className="bg-green-500/20 backdrop-blur-sm text-green-200 px-4 py-2 rounded-lg text-sm">
-                ✅ PDF uploaded successfully! Ask me anything about your document.
-              </div>
-            </div>
-          )}
-          
-          {chatHistory.length === 0 && !uploadStatus && !location.state?.studyTask && (
-            <div className="text-center py-12">
-              <div className="bg-gray-800/50 backdrop-blur-sm rounded-2xl p-8 max-w-md mx-auto">
-                <div className="text-6xl mb-4">
-                  {isRagMode ? '📄' : '💬'}
-                </div>
-                <h3 className="text-xl font-semibold text-gray-200 mb-2">
-                  {isRagMode ? 'Ready for PDF Chat!' : 'AI Assistant Ready!'}
-                </h3>
-                <p className="text-gray-400">
-                  {isRagMode 
-                    ? "Click the + button to upload a PDF and start asking questions about it."
-                    : "Ask me anything! I can help with scheduling, planning, learning, or general questions."
-                  }
-                </p>
-              </div>
-            </div>
-          )}
-          
-          {chatHistory.map((chat, index) => (
-            <div key={index} className={`flex ${chat.sender === 'user' ? 'justify-end' : 'justify-start'} mb-6`}>
-              {chat.sender === 'user' ? (
-                <div className="max-w-xl lg:max-w-2xl">
-                  <div className="bg-gradient-to-r from-yellow-500 to-yellow-400 text-white px-5 py-4 rounded-2xl rounded-br-md shadow-lg">
-                    <p className="whitespace-pre-wrap leading-relaxed">{chat.text}</p>
-                  </div>
-                  <div className="flex items-center justify-end mt-2 text-xs text-gray-400">
-                    <span>You</span>
-                  </div>
-                </div>
-              ) : (
-                <div className="max-w-none w-full">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-                      🤖
-                    </div>
-                    <div className="flex-grow min-w-0">
-                      <div className="bg-gray-800/80 backdrop-blur-sm text-gray-100 px-6 py-4 rounded-2xl rounded-tl-md shadow-lg border border-gray-700/50">
-                        <div className="prose prose-lg prose-invert max-w-none 
-                                      prose-headings:text-yellow-400 prose-headings:font-semibold prose-headings:mb-3 prose-headings:mt-4 
-                                      prose-p:text-gray-200 prose-p:leading-relaxed prose-p:mb-4
-                                      prose-strong:text-yellow-300 prose-strong:font-semibold
-                                      prose-ul:space-y-2 prose-ol:space-y-2
-                                      prose-li:text-gray-200 prose-li:leading-relaxed
-                                      prose-code:bg-gray-700 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-yellow-300
-                                      prose-pre:bg-gray-900 prose-pre:border prose-pre:border-gray-600
-                                      prose-table:border-collapse prose-table:w-full
-                                      prose-th:bg-gray-700 prose-th:border prose-th:border-gray-600 prose-th:px-4 prose-th:py-2 prose-th:text-yellow-300 prose-th:font-semibold
-                                      prose-td:border prose-td:border-gray-600 prose-td:px-4 prose-td:py-2 prose-td:text-gray-200
-                                      prose-blockquote:border-l-4 prose-blockquote:border-yellow-500 prose-blockquote:pl-4 prose-blockquote:italic">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{chat.text}</ReactMarkdown>
-                        </div>
-                      </div>
-                      <div className="flex items-center mt-2 text-xs text-gray-400">
-                        <span>{isRagMode ? 'Document Assistant' : 'AI Assistant'}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-          
-          {isLoading && (
-            <div className="flex justify-start mb-6">
-              <div className="flex items-start gap-4">
-                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
-                  🤖
-                </div>
-                <div className="bg-gray-800/80 backdrop-blur-sm text-gray-100 px-6 py-4 rounded-2xl rounded-tl-md shadow-lg border border-gray-700/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full animate-bounce"></div>
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                    <div className="w-2 h-2 bg-yellow-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                    <span className="ml-2 text-gray-300">AI is thinking...</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-          <div ref={chatEndRef} />
+          </div>
         </div>
 
-        {/* Input Form with Plus Button for PDF */}
-        <div className="flex-shrink-0 bg-gray-800/50 backdrop-blur-sm rounded-2xl p-4 border border-gray-700/50">
-          <form onSubmit={handleAskQuestion} className="flex gap-3 items-center">
-            {/* Plus Button for PDF Upload (only in PDF mode) */}
-            {isRagMode && (
-              <div className="flex-shrink-0">
-                <input 
-                  type="file" 
-                  accept=".pdf" 
-                  onChange={handleFileChange} 
-                  className="hidden" 
-                  id="pdf-upload-plus"
-                />
-                <label 
-                  htmlFor="pdf-upload-plus" 
-                  className="w-12 h-12 bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl cursor-pointer transition-colors flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105"
-                  title="Upload PDF"
-                >
-                  <span className="text-3xl font-bold leading-none">+</span>
-                </label>
+        {/* Main Chat Interface */}
+        <div className="flex-grow flex flex-col min-h-0 h-[80vh]">
+          {/* Chat Messages Area */}
+          <div className="flex-grow overflow-y-auto mb-6 space-y-6 pr-2 custom-scrollbar">
+            {chatHistory.length === 0 && !uploadStatus && !location.state?.studyTask && (
+              <div className="text-center flex items-center justify-center h-full">
+                <div className={`p-8 max-w-md mx-auto rounded-2xl border ${lightTheme ? 'bg-white border-gray-300' : 'bg-black/20 border-white/10'} backdrop-blur-sm`}>
+                  <div className="text-6xl mb-4">
+                    {isRagMode ? '📄' : ' '}
+                  </div>
+                  <SplitText 
+                    tag="h3"
+                    text={isRagMode ? 'Chat with your PDF' : 'AI Assistant'}
+                    className={`text-xl font-semibold ${lightTheme ? 'text-gray-800' : 'text-gray-100'} mb-2`}
+                  />
+                  <SplitText 
+                    text={isRagMode 
+                      ? "Click the upload icon to process a PDF and start asking questions."
+                      : "Ask me anything! I can help with scheduling, planning, learning, or general questions."
+                    }
+                    className={lightTheme ? 'text-gray-600' : 'text-gray-400'}
+                  />
+                </div>
               </div>
             )}
             
-            <div className="flex-grow">
-              <input 
-                type="text" 
-                value={question} 
-                onChange={(e) => setQuestion(e.target.value)} 
-                placeholder={isRagMode ? 
-                  (uploadStatus.includes('processed successfully') ? "Ask about your document..." : "Upload a PDF first using the + button...") 
-                  : "Ask me anything about scheduling, planning, or general topics..."
-                } 
-                className="w-full h-12 px-4 rounded-xl bg-gray-700/70 border border-gray-600/50 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent text-white placeholder-gray-400 transition-all duration-200" 
-                disabled={isLoading || (isRagMode && !uploadStatus.includes('processed successfully'))}
-              />
-            </div>
-            
-            <button 
-              type="submit" 
-              disabled={isLoading || !question.trim() || (isRagMode && !uploadStatus.includes('processed successfully'))} 
-              className="w-12 h-12 bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-600 hover:to-yellow-500 disabled:from-gray-600 disabled:to-gray-700 text-white rounded-xl font-semibold transition-all duration-200 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none flex items-center justify-center flex-shrink-0"
-            >
-              {isLoading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-              ) : (
-                <Send className="w-5 h-5"/>
-              )}
-            </button>
-          </form>
-          
-          {/* File Upload Status */}
-          {isRagMode && file && !uploadStatus.includes('processed successfully') && (
-            <div className="mt-3 p-3 bg-blue-500/20 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="text-blue-400">�</div>
-                  <span className="text-blue-200 text-sm">{file.name}</span>
-                </div>
-                <button 
-                  onClick={handleUpload} 
-                  disabled={isLoading} 
-                  className="bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-600 text-white px-3 py-1 rounded-lg transition-colors disabled:cursor-not-allowed text-sm"
-                >
-                  {isLoading ? '⏳ Uploading...' : 'Upload'}
-                </button>
+            {chatHistory.map((chat, index) => (
+              <div key={index} className={`flex ${chat.sender === 'user' ? 'justify-end' : 'justify-start'} mb-6`}>
+                {chat.sender === 'user' ? (
+                  <div className="max-w-xl lg:max-w-2xl">
+                    <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-5 py-4 rounded-2xl rounded-br-md shadow-lg">
+                      <p className="whitespace-pre-wrap leading-relaxed">{chat.text}</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="max-w-none w-full">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 bg-gradient-to-r from-gray-700 to-gray-800 rounded-full flex items-center justify-center flex-shrink-0 mt-1 border border-white/10">
+                        <BrainCircuit className="w-6 h-6 text-blue-400" />
+                      </div>
+                      <div className="flex-grow min-w-0">
+                        <div className="bg-black/30 backdrop-blur-sm text-gray-100 px-6 py-4 rounded-2xl rounded-tl-md shadow-lg border border-white/10">
+                          <div className="prose prose-lg prose-invert max-w-none 
+                                        prose-headings:text-blue-400 prose-headings:font-semibold 
+                                        prose-p:text-gray-200 
+                                        prose-strong:text-blue-300
+                                        prose-code:bg-gray-900/80 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-blue-300
+                                        prose-pre:bg-black/50 prose-pre:border prose-pre:border-white/10">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{chat.text}</ReactMarkdown>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            ))}
+            
+            {isLoading && (
+              <div className="flex justify-start mb-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-gradient-to-r from-gray-700 to-gray-800 rounded-full flex items-center justify-center flex-shrink-0 border border-white/10">
+                    <BrainCircuit className="w-6 h-6 text-blue-400" />
+                  </div>
+                  <div className="bg-black/30 backdrop-blur-sm text-gray-100 px-6 py-4 rounded-2xl rounded-tl-md shadow-lg border border-white/10">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                      <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      <span className="ml-2 text-gray-300">AI is thinking...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div ref={chatEndRef} />
+          </div>
+
+          {/* Input Form */}
+          <div className={`flex-shrink-0 p-3 rounded-2xl border ${lightTheme ? 'bg-white border-gray-300' : 'bg-black/30 border-white/10'} backdrop-blur-md`}>
+            {isRagMode && file && !uploadStatus.includes('processed successfully') && (
+              <div className="mb-3 p-3 bg-blue-900/50 rounded-lg border border-blue-400/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileUp className="w-5 h-5 text-blue-300" />
+                    <span className="text-blue-200 text-sm font-medium">{file.name}</span>
+                  </div>
+                  <button 
+                    onClick={handleUpload} 
+                    disabled={isLoading} 
+                    className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-600 text-white px-4 py-1.5 rounded-lg transition-colors disabled:cursor-not-allowed text-sm font-semibold"
+                  >
+                    {isLoading ? 'Uploading...' : 'Upload'}
+                  </button>
+                </div>
+              </div>
+            )}
+            <form onSubmit={handleAskQuestion} className="flex gap-3 items-center">
+              {isRagMode && (
+                <div className="flex-shrink-0">
+                  <input 
+                    type="file" 
+                    accept=".pdf" 
+                    onChange={handleFileChange} 
+                    className="hidden" 
+                    id="pdf-upload-icon"
+                  />
+                  <label 
+                    htmlFor="pdf-upload-icon" 
+                    className={`w-12 h-12 rounded-xl cursor-pointer transition-colors flex items-center justify-center shadow-lg hover:shadow-xl transform hover:scale-105 ${lightTheme ? 'bg-gray-200 hover:bg-gray-300 text-gray-800' : 'bg-white/10 hover:bg-white/20 text-white'}`}
+                    title="Upload PDF"
+                  >
+                    <FileUp className="w-6 h-6" />
+                  </label>
+                </div>
+              )}
+              
+              <div className="flex-grow">
+                <input 
+                  type="text" 
+                  value={question} 
+                  onChange={(e) => setQuestion(e.target.value)} 
+                  placeholder={isRagMode ? 
+                    (uploadStatus.includes('processed successfully') ? "Ask about your document..." : "Upload a PDF first...") 
+                    : "Ask me anything..."
+                  } 
+                  className={`w-full h-12 px-4 rounded-xl border focus:outline-none focus:ring-2 transition-all duration-200 ${lightTheme ? 'bg-white/80 border-gray-300 focus:ring-gray-800 text-black placeholder-gray-500' : 'bg-black/50 border-white/10 focus:ring-orange-500 text-white placeholder-gray-400'}`}
+                  disabled={isLoading || (isRagMode && !uploadStatus.includes('processed successfully'))}
+                />
+              </div>
+              
+              <button 
+                type="submit" 
+                disabled={isLoading || !question.trim() || (isRagMode && !uploadStatus.includes('processed successfully'))} 
+                className={`w-12 h-12 rounded-xl font-semibold transition-all duration-200 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105 disabled:transform-none flex items-center justify-center flex-shrink-0 ${lightTheme ? 'bg-gray-800 hover:bg-gray-900 disabled:bg-gray-400 text-white' : 'bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 disabled:from-gray-600 disabled:to-gray-700 text-white'}`}
+              >
+                {isLoading ? (
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                ) : (
+                  <Send className="w-5 h-5"/>
+                )}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

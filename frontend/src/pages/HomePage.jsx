@@ -2,9 +2,13 @@ import React, { useState, useEffect } from "react";
 import { Clock, CheckCircle, Calendar, MoreVertical, ArrowUpRight } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import axios from '../api/axios';
+import WeekCalendar from '../components/WeekCalendar';
+import FocusTimer from '../components/FocusTimer';
+import { useTheme } from "../context/ThemeContext";
 
-function HomePage({ todaysTasks = [], updateTaskStatus, user }) {
+function HomePage({ todaysTasks = [], weeklyTasks = [], updateTaskStatus, user }) {
   const navigate = useNavigate();
+  const { theme } = useTheme();
 
   // Filter tasks for display
   const pendingTodaysTasks = todaysTasks.filter(task => task.status !== 'completed');
@@ -31,6 +35,13 @@ function HomePage({ todaysTasks = [], updateTaskStatus, user }) {
   const today = new Date();
   const affirmIndex = today.getDate() % dailyAffirmations.length;
   const todayAffirmation = dailyAffirmations[affirmIndex];
+
+  const getTasksForDate = (date) => {
+    // Matches tasks for the selected date (YYYY-MM-DD)
+    const day = date.toISOString().split('T')[0];
+    // Use weeklyTasks instead of todaysTasks to get tasks for all dates
+    return weeklyTasks.filter(task => new Date(task.date).toISOString().split('T')[0] === day);
+  };
 
   // --- Sun Progress Component ---
   const SunProgress = ({ progress }) => {
@@ -178,35 +189,40 @@ function HomePage({ todaysTasks = [], updateTaskStatus, user }) {
   // Task Card Component
 const TaskCard = ({ task, onStatusChange, onNavigate }) => (
     <div 
-      className="relative group rounded-lg overflow-hidden border border-yellow-500/20 hover:border-yellow-500/40 backdrop-blur-sm transition-all duration-300 cursor-pointer hover:shadow-lg hover:shadow-yellow-500/10 hover:-translate-y-0.5"
+      className={`relative group rounded-lg overflow-hidden border backdrop-blur-sm transition-all duration-300 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 ${
+        lightTheme 
+          ? 'border-yellow-300/50 hover:border-yellow-400/70' 
+          : 'border-yellow-500/20 hover:border-yellow-500/40 hover:shadow-yellow-500/10'
+      }`}
       onClick={onNavigate}
       style={{
-        background: 'linear-gradient(45deg, rgba(20, 20, 20, 0.5), rgba(30, 30, 30, 0.5))'
+        background: lightTheme 
+          ? 'linear-gradient(45deg, rgba(255, 255, 255, 0.8), rgba(254, 243, 199, 0.8))'
+          : 'linear-gradient(45deg, rgba(20, 20, 20, 0.5), rgba(30, 30, 30, 0.5))'
       }}
     >
       <div className="p-4 flex items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className="text-white font-medium truncate">{task.title}</h4>
-            <ArrowUpRight className="w-4 h-4 text-yellow-500/50 group-hover:text-yellow-500 transition-colors" />
+            <h4 className={`font-medium truncate ${lightTheme ? 'text-gray-800' : 'text-white'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>{task.title}</h4>
+            <ArrowUpRight className={`w-4 h-4 transition-colors ${lightTheme ? 'text-yellow-600/70 group-hover:text-yellow-600' : 'text-yellow-500/50 group-hover:text-yellow-500'}`} />
           </div>
-          <div className="flex items-center gap-3 mt-1">
-            <p className="text-gray-400 text-sm">
-              {new Date(task.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </p>
-            {task.schedule_id?.schedule_title && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/20">
+          {task.schedule_id?.schedule_title && (
+            <div className="flex items-center gap-3 mt-1">
+              <span className={`text-xs px-2 py-0.5 rounded-full border ${lightTheme ? 'bg-yellow-200/50 text-yellow-800 border-yellow-300/50' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>
                 {task.schedule_id.schedule_title}
               </span>
-            )}
-          </div>
+            </div>
+          )}
         </div>        <div className="flex items-center gap-3">
           <button
             onClick={onStatusChange}
             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
               task.status === 'completed'
                 ? 'bg-yellow-500 border-yellow-600'
-                : 'border-gray-600 hover:border-yellow-500'
+                : lightTheme
+                  ? 'border-yellow-600/50 hover:border-yellow-500'
+                  : 'border-gray-600 hover:border-yellow-500'
             }`}
           >
             {task.status === 'completed' && (
@@ -214,7 +230,7 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
             )}
           </button>
           
-          <button className="text-gray-400 hover:text-white transition-colors duration-200">
+          <button className={`transition-colors duration-200 ${lightTheme ? 'text-gray-600 hover:text-gray-800' : 'text-gray-400 hover:text-white'}`}>
             <MoreVertical className="w-5 h-5" />
           </button>
         </div>
@@ -223,10 +239,15 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
   );
 
   // --- Main Page Layout ---
+  const lightTheme = theme === 'light';
+  const rootBg = lightTheme
+    ? 'bg-gradient-to-br from-yellow-50 via-yellow-100 to-amber-100 text-gray-900'
+    : 'bg-black text-white';
+
   return (
     <div
-      className="min-h-screen space-y-6 p-6 relative"
-      style={{
+      className={`min-h-screen space-y-6 p-6 relative ${rootBg} transition-colors duration-300`}
+      style={lightTheme ? { background: undefined } : {
         backgroundColor: "#0a0a0a",
         backgroundImage: `
           linear-gradient(to right, rgba(234, 179, 8, 0.1) 1px, transparent 1px),
@@ -237,108 +258,111 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
       }}
     >
       {/* Ambient glow effects */}
-      <div className="fixed inset-0 pointer-events-none">
+      {!lightTheme && <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-yellow-500/10 rounded-full blur-[128px]" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-[128px]" />
-      </div>
+      </div>}
       <link
         href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;700&display=swap"
         rel="stylesheet"
       />
 
-      {/* Top Row: Sun Progress + Affirmation */}
-      <div className="flex flex-col md:flex-row items-stretch justify-between gap-6">
-        <SunProgress progress={completionRate} />
-
-        {/* Daily Affirmation Box */}
-        <div className="relative rounded-2xl overflow-hidden flex items-center justify-center text-center p-8 w-full md:flex-1 shadow-xl border border-yellow-400/20 min-h-[280px]">
-          {/* Background Video */}
-          <video
-            src="https://v1.pinimg.com/videos/mc/720p/03/7b/d8/037bd82ba8b78d482c0c1459a2bbd1a6.mp4"
-            autoPlay
-            loop
-            muted
-            playsInline
-            className="absolute inset-0 w-full h-full object-cover"
+      {/* Main layout with bottoms aligned */}
+      <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
+        {/* Left column: Calendar, Daily Progress, and Daily Affirmations */}
+        <div className="col-span-7 md:col-span-4 flex flex-col">
+          <WeekCalendar 
+            todaysTasks={todaysTasks} 
+            getTasksForDate={getTasksForDate} 
           />
-          {/* Overlay Blur */}
-          <div className="absolute inset-0 bg-black/25 backdrop-blur-sm rounded-2xl"></div>
-
-          {/* Affirmation Text */}
-          <h2
-            className="relative text-white text-2xl md:text-3xl lg:text-4xl leading-snug drop-shadow-lg max-w-2xl text-left"
-            style={{
-              fontFamily: "'Bodoni Moda', serif",
-            }}
-          >
-            {todayAffirmation}
-          </h2>
-        </div>
-      </div>
-
-      {/* Task Lists Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Today's Pending Tasks */}
-        <div className="relative rounded-2xl overflow-hidden border border-yellow-500/30 bg-gray-900/60 backdrop-blur-sm shadow-xl p-6 group hover:border-yellow-500/50 transition-all duration-300">
-          <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          <h3 className="relative text-xl font-serif text-white mb-4 flex items-center gap-2">
-            <span className="p-2 rounded-lg bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors duration-300">
-              <Calendar className="w-5 h-5" />
-            </span>
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500">
-              Today's Tasks
-            </span>
-            <span className="text-sm text-yellow-500/70 ml-2 bg-yellow-500/10 px-2 py-1 rounded-full">
-              ({pendingTodaysTasks.length} pending)
-            </span>
-          </h3>
-          
-          <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
-            {pendingTodaysTasks.length === 0 ? (
-              <p className="text-gray-400">No pending tasks for today</p>
-            ) : (
-              pendingTodaysTasks.map(task => (
-                <TaskCard 
-                  key={task._id}
-                  task={task}
-                  onNavigate={() => task.schedule_id && navigate(`/dashboard/schedules/tasks/${task.schedule_id._id}`)}
-                  onStatusChange={(e) => {
-                    e.stopPropagation(); // Prevent navigation
-                    updateTaskStatus(task._id, 'completed');
-                  }}
-                />
-              ))
-            )}
+          {/* Daily Progress and Daily Affirmations - positioned to align bottoms with Focus Timer */}
+          <div className="flex-1 flex items-end">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full mt-8">
+              <div className="flex items-end justify-center">
+                <SunProgress progress={completionRate} />
+              </div>
+              <div className="flex items-end justify-center">
+                <div className={`relative rounded-2xl flex items-center justify-center text-center p-8 w-full shadow-xl border ${lightTheme ? 'border-yellow-200 bg-yellow-50/90' : 'border-yellow-400/20 bg-gray-900/70'} min-h-[280px] transition-colors duration-300`}>
+                  <h2
+                    className={`relative text-2xl md:text-3xl lg:text-4xl leading-snug drop-shadow-lg max-w-2xl text-left font-bold ${lightTheme ? 'text-yellow-900' : 'text-white'}`}
+                    style={{ fontFamily: "'Bodoni Moda', serif" }}
+                  >
+                    {todayAffirmation}
+                  </h2>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-
-        {/* Completed Tasks */}
-        <div className="relative rounded-2xl overflow-hidden border border-yellow-500/30 bg-gray-900/60 backdrop-blur-sm shadow-xl p-6">
-          <h3 className="text-xl font-serif mb-4 flex items-center gap-2">
-            <span className="p-2 rounded-lg bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors duration-300">
-              <CheckCircle className="w-5 h-5 text-yellow-500" />
-            </span>
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500">
-              Completed Tasks
-            </span>
-          </h3>
-          
-          <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
-            {completedTodaysTasks.length === 0 ? (
-              <p className="text-gray-400">No completed tasks today</p>
-            ) : (
-              completedTodaysTasks.map(task => (
-                <TaskCard 
-                  key={task._id}
-                  task={task}
-                  onNavigate={() => task.schedule_id && navigate(`/dashboard/schedules/tasks/${task.schedule_id._id}`)}
-                  onStatusChange={(e) => {
-                    e.stopPropagation(); // Prevent navigation
-                    updateTaskStatus(task._id, 'pending');
-                  }}
-                />
-              ))
-            )}
+        
+        {/* Right column: Focus Timer */}
+        <div className="col-span-7 md:col-span-3 flex items-end">
+          <FocusTimer />
+        </div>
+      </div>
+      
+      {/* Today's Tasks and Completed Tasks - below main layout */}
+      <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <div className={`relative rounded-2xl overflow-hidden border ${lightTheme ? 'border-yellow-300 bg-yellow-50/70' : 'border-yellow-500/30 bg-gray-900/60'} backdrop-blur-sm shadow-xl p-6 group hover:border-yellow-500/50 transition-all duration-300`}>
+            <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <h3 className={`relative text-xl mb-4 flex items-center gap-2 ${lightTheme ? 'text-yellow-800' : 'text-yellow-200'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>
+              <span className="p-2 rounded-lg bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors duration-300">
+                <Calendar className="w-5 h-5" />
+              </span>
+              <span className={`${lightTheme ? 'text-yellow-800' : 'bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500'}`}>
+                Today's Tasks
+              </span>
+              <span className={`text-sm ml-2 bg-yellow-500/10 px-2 py-1 rounded-full ${lightTheme ? 'text-yellow-700' : 'text-yellow-500/70'}`}>
+                ({pendingTodaysTasks.length} pending)
+              </span>
+            </h3>
+            <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
+              {pendingTodaysTasks.length === 0 ? (
+                <p className={`${lightTheme ? 'text-gray-600' : 'text-gray-400'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>No pending tasks for today</p>
+              ) : (
+                pendingTodaysTasks.map(task => (
+                  <TaskCard
+                    key={task._id}
+                    task={task}
+                    onNavigate={() => task.schedule_id && navigate(`/dashboard/schedules/tasks/${task.schedule_id._id}`)}
+                    onStatusChange={(e) => {
+                      e.stopPropagation();
+                      updateTaskStatus(task._id, 'completed');
+                    }}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+        <div>
+          <div className={`relative rounded-2xl overflow-hidden border backdrop-blur-sm shadow-xl p-6 ${lightTheme ? 'border-yellow-200 bg-yellow-50/90' : 'border-yellow-500/30 bg-gray-900/60'}`}>
+            <h3 className={`text-xl mb-4 flex items-center gap-2 ${lightTheme ? 'text-yellow-800' : 'text-yellow-200'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>
+              <span className="p-2 rounded-lg bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors duration-300">
+                <CheckCircle className="w-5 h-5 text-yellow-500" />
+              </span>
+              <span className={`${lightTheme ? 'text-yellow-800' : 'bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500'}`}>
+                Completed Tasks
+              </span>
+            </h3>
+            <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
+              {completedTodaysTasks.length === 0 ? (
+                <p className={`${lightTheme ? 'text-gray-600' : 'text-gray-400'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>No completed tasks today</p>
+              ) : (
+                completedTodaysTasks.map(task => (
+                  <TaskCard 
+                    key={task._id}
+                    task={task}
+                    onNavigate={() => task.schedule_id && navigate(`/dashboard/schedules/tasks/${task.schedule_id._id}`)}
+                    onStatusChange={(e) => {
+                      e.stopPropagation();
+                      updateTaskStatus(task._id, 'pending');
+                    }}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>

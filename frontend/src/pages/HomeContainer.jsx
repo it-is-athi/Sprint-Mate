@@ -8,9 +8,11 @@ function HomeContainer() {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [todaysTasks, setTodaysTasks] = useState([]);
+  const [weeklyTasks, setWeeklyTasks] = useState([]);
 
   useEffect(() => {
     fetchTodaysTasks();
+    fetchWeeklyTasks();
   }, [user]);
 
   const fetchTodaysTasks = async () => {
@@ -35,11 +37,49 @@ function HomeContainer() {
     }
   };
 
+  const fetchWeeklyTasks = async () => {
+    if (!user) {
+      return;
+    }
+    
+    try {
+      console.log('Fetching all user tasks for calendar');
+      const response = await api.get('/tasks/user-tasks');
+      console.log('User tasks response:', response.data);
+      
+      // Filter tasks for the current week (7 days including today)
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - 3); // Start 3 days before today
+      startOfWeek.setHours(0, 0, 0, 0);
+      
+      const endOfWeek = new Date(today);
+      endOfWeek.setDate(today.getDate() + 3); // End 3 days after today
+      endOfWeek.setHours(23, 59, 59, 999);
+      
+      const weeklyTasks = response.data.filter(task => {
+        const taskDate = new Date(task.date);
+        return taskDate >= startOfWeek && taskDate <= endOfWeek;
+      });
+      
+      console.log('Filtered weekly tasks:', weeklyTasks);
+      setWeeklyTasks(weeklyTasks);
+    } catch (error) {
+      console.error('Error fetching weekly tasks:', error);
+      if (error.response?.status === 401) {
+        console.log('Authentication error, redirecting to login');
+        navigate('/');
+      }
+      setWeeklyTasks([]);
+    }
+  };
+
   const updateTaskStatus = async (taskId, newStatus) => {
     try {
       await api.patch(`/tasks/${taskId}/status`, { status: newStatus });
-      // Refresh today's tasks after update
+      // Refresh both today's tasks and weekly tasks after update
       await fetchTodaysTasks();
+      await fetchWeeklyTasks();
     } catch (error) {
       console.error('Error updating task status:', error);
       if (error.response?.status === 401) {
@@ -53,6 +93,7 @@ function HomeContainer() {
   return (
     <HomePage 
       todaysTasks={todaysTasks}
+      weeklyTasks={weeklyTasks}
       updateTaskStatus={updateTaskStatus}
       user={user}
     />
