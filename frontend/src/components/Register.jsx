@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
-import { Zap, Eye, EyeOff, Lock, Shield, User } from 'lucide-react';
+import { Zap, Eye, EyeOff, Lock, Shield, User, ArrowRight } from 'lucide-react';
+import Silk from './Silk';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -35,132 +36,109 @@ export default function Register() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      {/* Background Image with Overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `url('https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1920&h=1080&fit=crop')`
-        }}
-      >
-        <div className="absolute inset-0 bg-black bg-opacity-70"></div>
+      {/* Animated Silk Background */}
+      <div className="absolute inset-0 w-full h-full z-0">
+        <Silk speed={5} scale={1} color="#F6A314" noiseIntensity={1.5} rotation={0} />
       </div>
 
-      {/* Top Navigation */}
-      <nav className="relative z-10 flex items-center justify-between p-6">
-        <div className="flex items-center">
-          <div className="w-10 h-10 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-xl flex items-center justify-center mr-3">
-            <Zap className="w-6 h-6 text-white" />
-          </div>
-          <span className="text-white text-xl font-bold">SprintMate</span>
-        </div>
-        <div className="hidden md:flex items-center space-x-8 text-white">
-          <button 
-            onClick={() => navigate('/')}
-            className="hover:text-emerald-400 transition-colors duration-200"
-          >
-            Login
-          </button>
-          <button 
-            onClick={() => navigate('/about')}
-            className="hover:text-emerald-400 transition-colors duration-200"
-          >
-            About Us
-          </button>
-          <button className="hover:text-emerald-400 transition-colors duration-200">Register</button>
-          <button 
-            onClick={() => navigate('/contact')}
-            className="hover:text-emerald-400 transition-colors duration-200"
-          >
-            Contact
-          </button>
-        </div>
-      </nav>
-
       {/* Main Content */}
-      <div className="relative z-10 flex items-center justify-center min-h-[calc(100vh-88px)] px-6">
+      <div className="relative z-10 flex items-center justify-center min-h-screen px-6">
         <div className="w-full max-w-md">
           {/* Logo Section */}
           <div className="text-center mb-8">
-            <div className="w-20 h-20 bg-gradient-to-br from-emerald-500 to-blue-500 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-2xl">
-              <Zap className="w-10 h-10 text-white" />
+            <div className="w-20 h-20 bg-gray-500/30 backdrop-blur-md rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-2xl border border-white/20 transition-all duration-300 hover:shadow-amber-500/50 hover:shadow-2xl group cursor-pointer">
+              <Zap className="w-10 h-10 text-white transition-all duration-300 group-hover:text-amber-400 group-hover:drop-shadow-[0_0_15px_rgba(251,191,36,0.8)]" />
             </div>
+            <h1 className="text-5xl font-bold mb-3 text-white drop-shadow-2xl">Create Account</h1>
+            <p className="text-gray-100 text-lg drop-shadow-lg">Start your journey today</p>
           </div>
 
           {/* Register Form Card */}
-          <div className="bg-black bg-opacity-40 backdrop-blur-md rounded-3xl border border-white border-opacity-20 overflow-hidden shadow-2xl">
+          <div className="bg-black/40 backdrop-blur-md rounded-2xl border border-white/10 overflow-hidden shadow-2xl">
             <div className="px-8 pt-8 pb-6">
               {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-5">
                 {/* Error Message */}
                 {errorMsg && (
-                  <div className="mb-4 text-red-400 text-center font-semibold">{errorMsg}</div>
+                  <div className="mb-4 p-3 bg-red-500/10 border border-red-500/20 rounded-xl text-red-300 text-center text-sm">{errorMsg}</div>
                 )}
 
-                {/* Name Field */}
-                <div className="relative group">
-                  <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-emerald-400 transition-colors duration-200" />
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Name"
-                    required
-                    disabled={showOtp || isLoading}
-                    className="w-full pl-12 pr-4 py-4 bg-white bg-opacity-10 backdrop-blur-sm border border-white border-opacity-20 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-50 disabled:bg-opacity-10 disabled:text-gray-400 text-white placeholder-gray-400 hover:bg-opacity-20"
-                  />
-                </div>
+                {!showOtp ? (
+                  <>
+                    {/* Name Field */}
+                    <div>
+                      <label className="block text-gray-300 text-xs font-medium mb-2 uppercase tracking-wide">Full Name</label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type="text"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          placeholder="Enter your name"
+                          required
+                          disabled={isLoading}
+                          className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white focus:bg-white/10 transition-all duration-300 disabled:opacity-50"
+                        />
+                      </div>
+                    </div>
 
-                {/* Email Field */}
-                <div className="relative group">
-                  <User className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-emerald-400 transition-colors duration-200" />
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Email"
-                    required
-                    disabled={showOtp || isLoading}
-                    className="w-full pl-12 pr-4 py-4 bg-white bg-opacity-10 backdrop-blur-sm border border-white border-opacity-20 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 disabled:bg-gray-50 disabled:bg-opacity-10 disabled:text-gray-400 text-white placeholder-gray-400 hover:bg-opacity-20"
-                  />
-                </div>
+                    {/* Email Field */}
+                    <div>
+                      <label className="block text-gray-300 text-xs font-medium mb-2 uppercase tracking-wide">Email Address</label>
+                      <div className="relative">
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="Enter your email"
+                          required
+                          disabled={isLoading}
+                          className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white focus:bg-white/10 transition-all duration-300 disabled:opacity-50"
+                        />
+                      </div>
+                    </div>
 
-                {/* Password Field */}
-                {!showOtp && (
-                  <div className="relative group">
-                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-emerald-400 transition-colors duration-200" />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      placeholder="Password"
-                      required
-                      disabled={isLoading}
-                      className="w-full pl-12 pr-12 py-4 bg-white bg-opacity-10 backdrop-blur-sm border border-white border-opacity-20 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-white placeholder-gray-400 hover:bg-opacity-20"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-300 transition-colors duration-200"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                )}
-
-                {/* OTP Field */}
-                {showOtp && (
-                  <div className="relative group">
-                    <Shield className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 group-focus-within:text-emerald-400 transition-colors duration-200" />
-                    <input
-                      type="text"
-                      value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
-                      placeholder="Enter 6-digit code"
-                      required
-                      disabled={isLoading}
-                      className="w-full pl-12 pr-4 py-4 bg-white bg-opacity-10 backdrop-blur-sm border border-white border-opacity-20 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition-all duration-200 text-center text-lg tracking-widest text-white placeholder-gray-400 hover:bg-opacity-20"
-                      maxLength={6}
-                    />
+                    {/* Password Field */}
+                    <div>
+                      <label className="block text-gray-300 text-xs font-medium mb-2 uppercase tracking-wide">Password</label>
+                      <div className="relative">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                        <input
+                          type={showPassword ? 'text' : 'password'}
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          placeholder="Create a password"
+                          required
+                          disabled={isLoading}
+                          className="w-full pl-12 pr-12 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white focus:bg-white/10 transition-all duration-300 disabled:opacity-50"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors duration-200"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <label className="block text-gray-300 text-xs font-medium mb-2 uppercase tracking-wide">Verification Code</label>
+                    <div className="relative">
+                      <Shield className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                      <input
+                        type="text"
+                        value={otp}
+                        onChange={(e) => setOtp(e.target.value)}
+                        placeholder="Enter 6-digit code"
+                        required
+                        disabled={isLoading}
+                        className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white focus:bg-white/10 transition-all duration-300 text-center text-xl tracking-widest disabled:opacity-50"
+                        maxLength={6}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -168,15 +146,18 @@ export default function Register() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full bg-gradient-to-r from-pink-500 to-orange-500 text-white font-bold py-4 rounded-xl hover:from-pink-600 hover:to-orange-600 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 focus:ring-offset-transparent transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl text-lg tracking-wide"
+                  className="w-full bg-white hover:bg-gray-100 text-black font-bold py-3.5 px-6 rounded-xl transition-all duration-300 hover:scale-[1.02] hover:shadow-xl hover:shadow-white/30 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center justify-center space-x-2"
                 >
                   {isLoading ? (
-                    <div className="flex items-center justify-center space-x-3">
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>{showOtp ? 'VERIFYING...' : 'SIGNING UP...'}</span>
-                    </div>
+                    <>
+                      <div className="w-5 h-5 border-3 border-black/30 border-t-black rounded-full animate-spin"></div>
+                      <span>{showOtp ? 'Verifying...' : 'Creating Account...'}</span>
+                    </>
                   ) : (
-                    <span>{showOtp ? 'VERIFY OTP' : 'SIGN UP'}</span>
+                    <>
+                      <span>{showOtp ? 'Verify Code' : 'Create Account'}</span>
+                      <ArrowRight className="w-5 h-5" />
+                    </>
                   )}
                 </button>
 
@@ -185,57 +166,22 @@ export default function Register() {
                   <button
                     type="button"
                     onClick={() => setShowOtp(false)}
-                    className="w-full text-gray-300 hover:text-white font-medium py-2 transition-colors duration-200"
+                    className="w-full text-gray-400 hover:text-white transition-colors duration-200 text-sm font-medium"
                   >
                     ← Back to Register
                   </button>
                 )}
               </form>
-            </div>
 
-            {/* Footer Actions */}
-            <div className="px-8 py-6 border-t border-white border-opacity-10">
-              <div className="flex items-center justify-center space-x-8">
-                <button
-                  onClick={() => navigate('/')}
-                  className="text-white hover:text-emerald-400 font-semibold transition-colors duration-200 text-sm tracking-wide"
-                >
-                  LOGIN
-                </button>
-                <button
-                  onClick={() => navigate('/help')}
-                  className="text-white hover:text-emerald-400 font-semibold transition-colors duration-200 text-sm tracking-wide"
-                >
-                  NEED HELP?
-                </button>
+              {/* Login Link */}
+              <div className="mt-6 pt-6 border-t border-white/10 text-center">
+                <p className="text-gray-400 text-sm">
+                  Already have an account?{' '}
+                  <Link to="/login" className="text-white hover:text-gray-300 font-semibold transition-colors duration-200">
+                    Sign In
+                  </Link>
+                </p>
               </div>
-            </div>
-          </div>
-
-          {/* Bottom Links */}
-          <div className="mt-8 text-center">
-            <div className="flex items-center justify-center space-x-8 text-gray-400 text-xs">
-              <button 
-                onClick={() => navigate('/about')}
-                className="hover:text-white transition-colors duration-200"
-              >
-                About Us
-              </button>
-              <button 
-                onClick={() => navigate('/privacy')}
-                className="hover:text-white transition-colors duration-200"
-              >
-                Privacy Policy
-              </button>
-              <button 
-                onClick={() => navigate('/terms')}
-                className="hover:text-white transition-colors duration-200"
-              >
-                Terms Of Use
-              </button>
-            </div>
-            <div className="mt-4 text-gray-500 text-xs">
-              © 2019 SprintMate. All Rights Reserved | Design By W3layouts
             </div>
           </div>
         </div>
