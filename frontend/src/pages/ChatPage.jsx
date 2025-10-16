@@ -180,12 +180,10 @@ Please teach me about this topic with clear explanations and practical examples.
 
   const lightTheme = theme === 'light';
 
+  const textareaRef = useRef(null);
+
   return (
-    <div className={`relative flex flex-col h-full w-full overflow-hidden ${lightTheme ? 'bg-white' : 'bg-black'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>
-      <link
-        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;700&display=swap"
-        rel="stylesheet"
-      />
+    <div className={`relative flex flex-col h-full w-full overflow-hidden font-sans ${lightTheme ? 'bg-white' : 'bg-black'}`}>
       {/* Aurora Background */}
       <div className="absolute inset-0 z-0 opacity-70">
         <Aurora 
@@ -198,7 +196,7 @@ Please teach me about this topic with clear explanations and practical examples.
       <div className="relative z-10 flex flex-col h-full w-full p-6">
         {/* Header with Mode Selection */}
         <div className="flex-shrink-0 mb-6">
-          <div className={`p-2 rounded-xl border w-auto ${lightTheme ? 'bg-white border-gray-300' : 'bg-black/20 border-white/10'} backdrop-blur-md`}>
+              <div className={`p-2 rounded-xl border w-auto ${lightTheme ? 'bg-white border-gray-300' : 'bg-black/20 border-white/10'} backdrop-blur-md`}>
             <div className="flex gap-2">
               <button
                 onClick={() => {
@@ -211,7 +209,7 @@ Please teach me about this topic with clear explanations and practical examples.
                 }}
                 className={`px-8 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 ${
                   !isRagMode 
-                    ? (lightTheme ? 'bg-yellow-500 text-white shadow-lg' : 'bg-orange-500 text-white shadow-lg shadow-orange-500/30')
+                    ? (lightTheme ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-600 text-white shadow-lg shadow-blue-600/30')
                     : (lightTheme ? 'bg-transparent text-gray-700 hover:bg-black/10' : 'bg-transparent text-gray-300 hover:bg-white/10')
                 }`}
               >
@@ -229,7 +227,7 @@ Please teach me about this topic with clear explanations and practical examples.
                 }}
                 className={`px-8 py-2 rounded-lg font-semibold transition-all duration-300 flex items-center gap-2 whitespace-nowrap ${
                   isRagMode 
-                    ? (lightTheme ? 'bg-yellow-500 text-white shadow-lg' : 'bg-orange-500 text-white shadow-lg shadow-orange-500/30')
+                    ? (lightTheme ? 'bg-blue-600 text-white shadow-lg' : 'bg-blue-600 text-white shadow-lg shadow-blue-600/30')
                     : (lightTheme ? 'bg-transparent text-gray-700 hover:bg-black/10' : 'bg-transparent text-gray-300 hover:bg-white/10')
                 }`}
               >
@@ -246,23 +244,23 @@ Please teach me about this topic with clear explanations and practical examples.
           <div className="flex-grow overflow-y-auto mb-6 space-y-6 pr-2 custom-scrollbar">
             {chatHistory.length === 0 && !uploadStatus && !location.state?.studyTask && (
               <div className="text-center flex items-center justify-center h-full">
-                <div className={`p-8 max-w-md mx-auto rounded-2xl border ${lightTheme ? 'bg-white border-gray-300' : 'bg-black/20 border-white/10'} backdrop-blur-sm`}>
-                  <div className="text-6xl mb-4">
-                    {isRagMode ? '📄' : ' '}
+                {isRagMode ? (
+                  <div className={`p-8 max-w-md mx-auto rounded-2xl border ${lightTheme ? 'bg-white border-gray-300' : 'bg-black/20 border-white/10'} backdrop-blur-sm`}>
+                    <div className="text-6xl mb-4">📄</div>
+                    <h3 className={`text-xl font-semibold font-sans ${lightTheme ? 'text-gray-800' : 'text-gray-100'} mb-2`}>Chat with your PDF</h3>
+                    <p className={`${lightTheme ? 'text-gray-600' : 'text-gray-400'} font-sans`}>
+                      Got a PDF? Upload it and start asking — I will handle the rest.
+                    </p>
                   </div>
-                  <SplitText 
-                    tag="h3"
-                    text={isRagMode ? 'Chat with your PDF' : 'AI Assistant'}
-                    className={`text-xl font-semibold ${lightTheme ? 'text-gray-800' : 'text-gray-100'} mb-2`}
-                  />
-                  <SplitText 
-                    text={isRagMode 
-                      ? "Click the upload icon to process a PDF and start asking questions."
-                      : "Ask me anything! I can help with scheduling, planning, learning, or general questions."
-                    }
-                    className={lightTheme ? 'text-gray-600' : 'text-gray-400'}
-                  />
-                </div>
+                ) : (
+                  <div className={`p-8 max-w-md mx-auto rounded-2xl border ${lightTheme ? 'bg-white border-gray-300' : 'bg-black/20 border-white/10'} backdrop-blur-sm`}>
+                    <div className="text-6xl mb-4"> </div>
+                    <h3 className={`text-xl font-semibold font-sans ${lightTheme ? 'text-gray-800' : 'text-gray-100'} mb-2`}>AI Assistant</h3>
+                    <p className={`${lightTheme ? 'text-gray-600' : 'text-gray-400'} font-sans`}>
+                      Ask me anything — I’ll help you plan, learn, and get things done!!
+                    </p>
+                  </div>
+                )}
               </div>
             )}
             
@@ -281,7 +279,7 @@ Please teach me about this topic with clear explanations and practical examples.
                         <BrainCircuit className="w-6 h-6 text-blue-400" />
                       </div>
                       <div className="flex-grow min-w-0">
-                        <div className="bg-black/30 backdrop-blur-sm text-gray-100 px-6 py-4 rounded-2xl rounded-tl-md shadow-lg border border-white/10">
+                        <div className="bg-black/30 backdrop-blur-sm text-gray-100 px-6 py-4 rounded-2xl rounded-tl-md shadow-lg border border-white/10 font-sans">
                           <div className="prose prose-lg prose-invert max-w-none 
                                         prose-headings:text-blue-400 prose-headings:font-semibold 
                                         prose-p:text-gray-200 
@@ -304,7 +302,7 @@ Please teach me about this topic with clear explanations and practical examples.
                   <div className="w-10 h-10 bg-gradient-to-r from-gray-700 to-gray-800 rounded-full flex items-center justify-center flex-shrink-0 border border-white/10">
                     <BrainCircuit className="w-6 h-6 text-blue-400" />
                   </div>
-                  <div className="bg-black/30 backdrop-blur-sm text-gray-100 px-6 py-4 rounded-2xl rounded-tl-md shadow-lg border border-white/10">
+                  <div className="bg-black/30 backdrop-blur-sm text-gray-100 px-6 py-4 rounded-2xl rounded-tl-md shadow-lg border border-white/10 font-sans">
                     <div className="flex items-center gap-3">
                       <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce"></div>
                       <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
@@ -321,12 +319,19 @@ Please teach me about this topic with clear explanations and practical examples.
           {/* Input Form */}
           <div className={`flex-shrink-0 p-3 rounded-2xl border ${lightTheme ? 'bg-white border-gray-300' : 'bg-black/30 border-white/10'} backdrop-blur-md`}>
             {isRagMode && file && !uploadStatus.includes('processed successfully') && (
-              <div className="mb-3 p-3 bg-blue-900/50 rounded-lg border border-blue-400/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <FileUp className="w-5 h-5 text-blue-300" />
-                    <span className="text-blue-200 text-sm font-medium">{file.name}</span>
-                  </div>
+              <div className="mb-3 p-3 bg-blue-900/50 rounded-lg border border-blue-400/20 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <FileUp className="w-5 h-5 text-blue-300" />
+                  <span className="text-blue-200 text-sm font-medium">{file.name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => { setFile(null); setUploadStatus(''); }}
+                    className="p-2 rounded-lg bg-red-600/20 text-red-400 border border-red-500/20 hover:bg-red-600/30"
+                    title="Remove file"
+                  >
+                    ✕
+                  </button>
                   <button 
                     onClick={handleUpload} 
                     disabled={isLoading} 
@@ -358,15 +363,29 @@ Please teach me about this topic with clear explanations and practical examples.
               )}
               
               <div className="flex-grow">
-                <input 
-                  type="text" 
-                  value={question} 
-                  onChange={(e) => setQuestion(e.target.value)} 
-                  placeholder={isRagMode ? 
-                    (uploadStatus.includes('processed successfully') ? "Ask about your document..." : "Upload a PDF first...") 
-                    : "Ask me anything..."
-                  } 
-                  className={`w-full h-12 px-4 rounded-xl border focus:outline-none focus:ring-2 transition-all duration-200 ${lightTheme ? 'bg-white/80 border-gray-300 focus:ring-gray-800 text-black placeholder-gray-500' : 'bg-black/50 border-white/10 focus:ring-orange-500 text-white placeholder-gray-400'}`}
+                <textarea
+                  ref={textareaRef}
+                  rows={2}
+                  value={question}
+                  onChange={(e) => {
+                    setQuestion(e.target.value);
+                    // auto-resize
+                    const ta = textareaRef.current;
+                    if (ta) {
+                      ta.style.height = 'auto';
+                      ta.style.height = Math.min(160, ta.scrollHeight) + 'px';
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      if (question.trim() && !isLoading && !(isRagMode && !uploadStatus.includes('processed successfully'))) {
+                        handleAskQuestion(e);
+                      }
+                    }
+                  }}
+                  placeholder={isRagMode ? (uploadStatus.includes('processed successfully') ? "Ask about your document..." : "Upload a PDF first...") : "Ask me anything..."}
+                  className={`w-full px-4 rounded-xl border focus:outline-none focus:ring-2 transition-all duration-200 font-sans resize-none overflow-auto no-scrollbar min-h-[70px] ${lightTheme ? 'bg-white/80 border-gray-300 focus:ring-gray-800 text-black placeholder-gray-500' : 'bg-black/50 border-white/10 focus:ring-blue-500 text-white placeholder-gray-400'}`}
                   disabled={isLoading || (isRagMode && !uploadStatus.includes('processed successfully'))}
                 />
               </div>
