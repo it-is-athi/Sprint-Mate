@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { AuthContext } from '../context/AuthContext';
 import api from '../api/axios';
 import { Zap, Eye, EyeOff, Lock, Shield, User, ArrowRight } from 'lucide-react';
 import Silk from './Silk';
@@ -14,6 +15,7 @@ export default function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
+  const { checkAuth } = useContext(AuthContext);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,6 +27,7 @@ export default function Register() {
         setShowOtp(true);
       } else {
         await api.post('/auth/verify-otp', { email, otp });
+        await checkAuth(); // Fetch user data after OTP verification
         navigate('/dashboard');
       }
     } catch (err) {
