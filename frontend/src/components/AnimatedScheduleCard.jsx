@@ -135,13 +135,15 @@ const AnimatedScheduleCard = ({
                   type="text"
                   value={editForm.schedule_title}
                   onChange={(e) => setEditForm({...editForm, schedule_title: e.target.value})}
-                  className="w-full text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500 bg-gray-800/50 border border-yellow-500/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-transparent"
+                  className="w-full text-xl font-bold text-white bg-gray-800/60 border border-yellow-500/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent placeholder-yellow-300"
+                  style={{ caretColor: '#FFD36B' }}
                   placeholder="Schedule title"
                 />
                 <textarea
                   value={editForm.description}
                   onChange={(e) => setEditForm({...editForm, description: e.target.value})}
-                  className="w-full text-gray-400 text-sm bg-gray-800/50 border border-yellow-500/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-500/50 focus:border-transparent resize-none"
+                  className="w-full text-gray-200 text-sm bg-gray-800/60 border border-yellow-500/30 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent resize-none placeholder-yellow-400"
+                  style={{ caretColor: '#FFD36B' }}
                   rows="2"
                   placeholder="Schedule description"
                 />

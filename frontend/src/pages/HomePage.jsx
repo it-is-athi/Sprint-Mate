@@ -9,6 +9,8 @@ import { useTheme } from "../context/ThemeContext";
 function HomePage({ todaysTasks = [], weeklyTasks = [], updateTaskStatus, user }) {
   const navigate = useNavigate();
   const { theme } = useTheme();
+  const [showTaskModal, setShowTaskModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
 
   // Filter tasks for display
   const pendingTodaysTasks = todaysTasks.filter(task => task.status !== 'completed');
@@ -159,42 +161,50 @@ function HomePage({ todaysTasks = [], weeklyTasks = [], updateTaskStatus, user }
 
         {/* Heading */}
         <h3
-          className="absolute top-4 text-lg tracking-wide z-40 bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500"
-          style={{ 
-            fontFamily: "'Bodoni Moda', serif",
-            textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)',
-          }}
+          className="absolute top-4 text-lg tracking-wide z-40 bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500 serif-lg"
+          style={{ textShadow: '0 2px 4px rgba(0, 0, 0, 0.5)' }}
         >
           Daily Progress
         </h3>
-
-        {/* Percentage Text */}
         <span
-          className="relative text-5xl font-bold z-40 text-white"
-          style={{ 
-            fontFamily: "'Bodoni Moda', serif",
-            textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)',
-          }}
+          className="relative text-5xl font-bold z-40 text-white serif-lg"
+          style={{ textShadow: '0 2px 8px rgba(0, 0, 0, 0.7)' }}
         >
           {safeProgress}%
         </span>
+
       </div>
     );
   };
 
-  // --- Stats Card Component ---
-  const cardBg =
-    "url('https://i.pinimg.com/1200x/90/d2/66/90d266fb509642471f06efd568dd460e.jpg')";
-
   // Task Card Component
-const TaskCard = ({ task, onStatusChange, onNavigate }) => (
+const TaskCard = ({ task, onStatusChange }) => {
+  const lightTheme = theme === 'light';
+  
+  const handleTaskClick = (e) => {
+    // Don't open modal if clicking the checkbox
+    if (e.target.closest('button')) {
+      return;
+    }
+    setSelectedTask(task);
+    setShowTaskModal(true);
+  };
+
+  const handleScheduleClick = (e) => {
+    e.stopPropagation();
+    if (task.schedule_id?._id) {
+      navigate(`/dashboard/schedules/tasks/${task.schedule_id._id}`);
+    }
+  };
+
+  return (
     <div 
       className={`relative group rounded-lg overflow-hidden border backdrop-blur-sm transition-all duration-300 cursor-pointer hover:shadow-lg hover:-translate-y-0.5 ${
         lightTheme 
           ? 'border-yellow-300/50 hover:border-yellow-400/70' 
           : 'border-yellow-500/20 hover:border-yellow-500/40 hover:shadow-yellow-500/10'
       }`}
-      onClick={onNavigate}
+      onClick={handleTaskClick}
       style={{
         background: lightTheme 
           ? 'linear-gradient(45deg, rgba(255, 255, 255, 0.8), rgba(254, 243, 199, 0.8))'
@@ -204,17 +214,28 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
       <div className="p-4 flex items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2">
-            <h4 className={`font-medium truncate ${lightTheme ? 'text-gray-800' : 'text-white'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>{task.title}</h4>
+            <h4 className={`font-medium truncate ${lightTheme ? 'text-gray-800' : 'text-white'} serif-lg`}>
+              {task.name || task.task_title || task.title}
+            </h4>
             <ArrowUpRight className={`w-4 h-4 transition-colors ${lightTheme ? 'text-yellow-600/70 group-hover:text-yellow-600' : 'text-yellow-500/50 group-hover:text-yellow-500'}`} />
           </div>
           {task.schedule_id?.schedule_title && (
             <div className="flex items-center gap-3 mt-1">
-              <span className={`text-xs px-2 py-0.5 rounded-full border ${lightTheme ? 'bg-yellow-200/50 text-yellow-800 border-yellow-300/50' : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>
+              <span 
+                onClick={handleScheduleClick}
+                className={`text-xs px-2 py-0.5 rounded-full border cursor-pointer transition-all duration-200 ${
+                  lightTheme 
+                    ? 'bg-yellow-200/50 text-yellow-800 border-yellow-300/50 hover:bg-yellow-300/70 hover:border-yellow-400' 
+                    : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20 hover:bg-yellow-500/20 hover:border-yellow-500/40'
+                }`}
+              >
                 {task.schedule_id.schedule_title}
               </span>
             </div>
           )}
-        </div>        <div className="flex items-center gap-3">
+        </div>
+        
+        <div className="flex items-center gap-3">
           <button
             onClick={onStatusChange}
             className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-200 ${
@@ -229,14 +250,11 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
               <CheckCircle className="w-4 h-4 text-black" />
             )}
           </button>
-          
-          <button className={`transition-colors duration-200 ${lightTheme ? 'text-gray-600 hover:text-gray-800' : 'text-gray-400 hover:text-white'}`}>
-            <MoreVertical className="w-5 h-5" />
-          </button>
         </div>
       </div>
     </div>
   );
+};
 
   // --- Main Page Layout ---
   const lightTheme = theme === 'light';
@@ -262,10 +280,6 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
         <div className="absolute top-0 left-1/4 w-96 h-96 bg-yellow-500/10 rounded-full blur-[128px]" />
         <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-amber-500/10 rounded-full blur-[128px]" />
       </div>}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;700&display=swap"
-        rel="stylesheet"
-      />
 
       {/* Main layout with bottoms aligned */}
       <div className="grid grid-cols-1 md:grid-cols-7 gap-6">
@@ -284,8 +298,7 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
               <div className="flex items-end justify-center">
                 <div className={`relative rounded-2xl flex items-center justify-center text-center p-8 w-full shadow-xl border ${lightTheme ? 'border-yellow-200 bg-yellow-50/90' : 'border-yellow-400/20 bg-gray-900/70'} min-h-[280px] transition-colors duration-300`}>
                   <h2
-                    className={`relative text-2xl md:text-3xl lg:text-4xl leading-snug drop-shadow-lg max-w-2xl text-left font-bold ${lightTheme ? 'text-yellow-900' : 'text-white'}`}
-                    style={{ fontFamily: "'Bodoni Moda', serif" }}
+                    className={`relative text-2xl md:text-3xl lg:text-4xl leading-snug drop-shadow-lg max-w-2xl text-left font-bold ${lightTheme ? 'text-yellow-900' : 'text-white'} serif-lg`}
                   >
                     {todayAffirmation}
                   </h2>
@@ -306,7 +319,7 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
         <div>
           <div className={`relative rounded-2xl overflow-hidden border ${lightTheme ? 'border-yellow-300 bg-yellow-50/70' : 'border-yellow-500/30 bg-gray-900/60'} backdrop-blur-sm shadow-xl p-6 group hover:border-yellow-500/50 transition-all duration-300`}>
             <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <h3 className={`relative text-xl mb-4 flex items-center gap-2 ${lightTheme ? 'text-yellow-800' : 'text-yellow-200'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>
+                  <h3 className={`relative text-xl mb-4 flex items-center gap-2 ${lightTheme ? 'text-yellow-800' : 'text-yellow-200'} serif-lg`}>
               <span className="p-2 rounded-lg bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors duration-300">
                 <Calendar className="w-5 h-5" />
               </span>
@@ -319,13 +332,12 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
             </h3>
             <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
               {pendingTodaysTasks.length === 0 ? (
-                <p className={`${lightTheme ? 'text-gray-600' : 'text-gray-400'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>No pending tasks for today</p>
+                <p className={`${lightTheme ? 'text-gray-600' : 'text-gray-400'}`}>No pending tasks for today</p>
               ) : (
                 pendingTodaysTasks.map(task => (
                   <TaskCard
                     key={task._id}
                     task={task}
-                    onNavigate={() => task.schedule_id && navigate(`/dashboard/schedules/tasks/${task.schedule_id._id}`)}
                     onStatusChange={(e) => {
                       e.stopPropagation();
                       updateTaskStatus(task._id, 'completed');
@@ -338,7 +350,7 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
         </div>
         <div>
           <div className={`relative rounded-2xl overflow-hidden border backdrop-blur-sm shadow-xl p-6 ${lightTheme ? 'border-yellow-200 bg-yellow-50/90' : 'border-yellow-500/30 bg-gray-900/60'}`}>
-            <h3 className={`text-xl mb-4 flex items-center gap-2 ${lightTheme ? 'text-yellow-800' : 'text-yellow-200'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>
+            <h3 className={`text-xl mb-4 flex items-center gap-2 ${lightTheme ? 'text-yellow-800' : 'text-yellow-200'} serif-lg`}>
               <span className="p-2 rounded-lg bg-yellow-500/10 group-hover:bg-yellow-500/20 transition-colors duration-300">
                 <CheckCircle className="w-5 h-5 text-yellow-500" />
               </span>
@@ -348,13 +360,12 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
             </h3>
             <div className="space-y-3 max-h-[400px] overflow-y-auto custom-scrollbar">
               {completedTodaysTasks.length === 0 ? (
-                <p className={`${lightTheme ? 'text-gray-600' : 'text-gray-400'}`} style={{ fontFamily: "'Bodoni Moda', serif" }}>No completed tasks today</p>
+                <p className={`${lightTheme ? 'text-gray-600' : 'text-gray-400'}`}>No completed tasks today</p>
               ) : (
                 completedTodaysTasks.map(task => (
                   <TaskCard 
                     key={task._id}
                     task={task}
-                    onNavigate={() => task.schedule_id && navigate(`/dashboard/schedules/tasks/${task.schedule_id._id}`)}
                     onStatusChange={(e) => {
                       e.stopPropagation();
                       updateTaskStatus(task._id, 'pending');
@@ -366,6 +377,67 @@ const TaskCard = ({ task, onStatusChange, onNavigate }) => (
           </div>
         </div>
       </div>
+
+      {/* Task Description Modal */}
+      {showTaskModal && selectedTask && (
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-gray-900 border border-yellow-500/30 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-gray-900 border-b border-yellow-500/20 p-6 flex items-center justify-between">
+              <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-yellow-200 to-yellow-500">
+                {selectedTask.name || selectedTask.task_title || selectedTask.title}
+              </h3>
+              <button
+                onClick={() => setShowTaskModal(false)}
+                className="text-gray-400 hover:text-white transition-colors duration-200 text-xl font-bold leading-none"
+              >
+                ×
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              {/* Schedule Name */}
+              {selectedTask.schedule_id?.schedule_title && (
+                <div>
+                  <h4 className="text-sm font-medium text-gray-400 mb-2">Schedule</h4>
+                  <span 
+                    onClick={() => {
+                      setShowTaskModal(false);
+                      navigate(`/dashboard/schedules/tasks/${selectedTask.schedule_id._id}`);
+                    }}
+                    className="inline-block px-3 py-1.5 bg-yellow-500/10 text-yellow-500 border border-yellow-500/20 rounded-lg cursor-pointer hover:bg-yellow-500/20 hover:border-yellow-500/40 transition-all duration-200"
+                  >
+                    {selectedTask.schedule_id.schedule_title}
+                  </span>
+                </div>
+              )}
+              
+              {/* Task Status and Due Date */}
+              <div className="flex flex-wrap gap-3 items-center">
+                <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                  selectedTask.status === 'completed' 
+                    ? 'bg-green-600 text-white' 
+                    : 'bg-yellow-600 text-white'
+                }`}>
+                  {selectedTask.status === 'completed' ? 'Completed' : 'Pending'}
+                </span>
+                <span className="text-gray-400 text-sm">
+                  Due: {new Date(selectedTask.due_date || selectedTask.date).toLocaleDateString()}
+                </span>
+              </div>
+              
+              {/* Full Task Description */}
+              <div>
+                <h4 className="text-lg font-medium text-white mb-2">Description</h4>
+                <div className="bg-gray-800 p-4 rounded-lg">
+                  <p className="text-gray-300 leading-relaxed whitespace-pre-wrap">
+                    {selectedTask.description || selectedTask.task_description || 'No description available.'}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

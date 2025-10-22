@@ -151,13 +151,17 @@ const WeekCalendar = ({ todaysTasks = [], getTasksForDate = () => [] }) => {
                   }`}
                 >
                   {tasksForDay.length === 0 ? (
-                    <DropdownMenuItem 
-                      disabled 
-                      className={`${lightTheme ? 'text-gray-500' : 'text-gray-400'} text-center py-3`}
+                    <div
+                      role="status"
+                      className={`w-full flex items-center justify-center py-4 px-3 ${
+                        lightTheme
+                          ? 'bg-white/60 backdrop-blur-md border border-white/30 text-amber-800 shadow-[0_8px_30px_rgba(250,204,21,0.12)]'
+                          : 'bg-white/5 backdrop-blur-sm border border-yellow-500/30 text-yellow-200 shadow-[0_8px_30px_rgba(245,158,11,0.12)]'
+                      } rounded-xl mx-2 my-2`}
                       style={{ fontFamily: "'Bodoni Moda', serif" }}
                     >
-                      No tasks for this day
-                    </DropdownMenuItem>
+                      <span className="text-sm font-medium">No tasks for this day</span>
+                    </div>
                   ) : (
                     tasksForDay.map(task => (
                       <DropdownMenuItem 

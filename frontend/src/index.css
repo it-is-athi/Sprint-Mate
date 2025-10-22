@@ -1,3 +1,30 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Serif headings: apply Bodoni Moda to larger text only */
+.serif-lg {
+	font-family: 'Bodoni Moda', serif;
+}
+
+/* Ensure small text retains the sans-serif UI font for readability */
+.serif-lg.text-sm,
+.serif-lg.text-xs {
+	font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+}
+
+/* Utility: apply serif for md and above via a helper class */
+@media (min-width: 768px) {
+	.serif-md-up {
+		font-family: 'Bodoni Moda', serif;
+	}
+}
+
+/* Hide scrollbar but keep scrolling (works for WebKit browsers and Firefox) */
+.no-scrollbar {
+	-ms-overflow-style: none; /* IE and Edge */
+	scrollbar-width: none; /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+	display: none; /* Chrome, Safari, Opera */
+}

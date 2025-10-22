@@ -124,7 +124,7 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
       <div className={`${cardBg} rounded-xl p-6 border ${borderColor}`}>
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <h3 className={`text-xl font-semibold mb-2 ${lightTheme ? 'text-yellow-900' : 'text-yellow-400'}`}>{schedule.schedule_title}</h3>
+            <h3 className={`text-xl font-semibold mb-2 ${lightTheme ? 'text-yellow-900' : 'text-yellow-400'} serif-lg`}>{schedule.schedule_title}</h3>
             <p className={subTextColor}>{schedule.description}</p>
             <div className="flex items-center space-x-4 mt-4">
               <span className={`text-sm ${lightTheme ? 'text-gray-500' : 'text-gray-500'}`}>
@@ -203,7 +203,7 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                           <Trash2 className="w-3 h-3" />
                         </button>
                         
-                        <h4 className={`font-semibold mb-2 text-center text-sm pr-8 ${textColor}`}>{task.task_title || task.name}</h4>
+                        <h4 className={`font-semibold mb-2 text-center text-sm pr-8 ${textColor} serif-lg`}>{task.task_title || task.name}</h4>
                         <p className={`${subTextColor} text-xs mb-3 text-center line-clamp-2`}>{task.task_description || task.description}</p>
                         
                         <div className="flex flex-col items-center space-y-2 mb-3">
