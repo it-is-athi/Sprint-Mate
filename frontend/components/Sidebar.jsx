@@ -1,6 +1,6 @@
 import React, { useContext } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Home, Calendar, CheckSquare, MessageSquare, User, LogOut, Sun, Moon } from 'lucide-react';
+import { Home, Calendar, CheckSquare, MessageSquare, User, LogOut, Sun, Moon, TrendingUp } from 'lucide-react';
 import { AuthContext } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -55,6 +55,10 @@ const Sidebar = () => {
         <NavLink to="/dashboard/tasks" className={navLinkClasses}>
           <CheckSquare className="w-5 h-5" />
           <span className="font-semibold">Tasks</span>
+        </NavLink>
+        <NavLink to="/dashboard/progress" className={navLinkClasses}>
+          <TrendingUp className="w-5 h-5" />
+          <span className="font-semibold">Progress</span>
         </NavLink>
         <NavLink to="/dashboard/chat" className={navLinkClasses}>
           <MessageSquare className="w-5 h-5" />

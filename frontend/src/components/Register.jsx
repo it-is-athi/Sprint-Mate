@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../api/axios';
-import { Zap, Eye, EyeOff, Lock, Shield, User, ArrowRight } from 'lucide-react';
+import { Zap, Shield, User, ArrowRight } from 'lucide-react';
 import Silk from './Silk';
+import PasswordInput from './PasswordInput';
 
 export default function Register() {
   const [name, setName] = useState('');
@@ -10,17 +11,36 @@ export default function Register() {
   const [password, setPassword] = useState('');
   const [otp, setOtp] = useState('');
   const [showOtp, setShowOtp] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
+
+  // Client-side password validation
+  const validatePassword = (password) => {
+    const validations = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\?]/.test(password)
+    };
+    return Object.values(validations).every(Boolean);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMsg('');
+    
     try {
       if (!showOtp) {
+        // Validate password on frontend before sending
+        if (!validatePassword(password)) {
+          setErrorMsg('Password must meet all requirements (8+ characters, uppercase, lowercase, number, special character)');
+          setIsLoading(false);
+          return;
+        }
+        
         await api.post('/auth/register', { name, email, password });
         setShowOtp(true);
       } else {
@@ -28,7 +48,12 @@ export default function Register() {
         navigate('/dashboard');
       }
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Registration failed');
+      // Handle backend validation errors
+      if (err.response?.data?.errors) {
+        setErrorMsg(err.response.data.errors.join('. '));
+      } else {
+        setErrorMsg(err.response?.data?.message || 'Registration failed');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -102,25 +127,13 @@ export default function Register() {
                     {/* Password Field */}
                     <div>
                       <label className="block text-gray-300 text-xs font-medium mb-2 uppercase tracking-wide">Password</label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="Create a password"
-                          required
-                          disabled={isLoading}
-                          className="w-full pl-12 pr-12 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white focus:bg-white/10 transition-all duration-300 disabled:opacity-50"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors duration-200"
-                        >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
-                      </div>
+                      <PasswordInput
+                        value={password}
+                        onChange={setPassword}
+                        placeholder="Create a password"
+                        disabled={isLoading}
+                        showValidation={true}
+                      />
                     </div>
                   </>
                 ) : (

@@ -1,7 +1,7 @@
 import React, { useContext } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { Zap, LogOut, Calendar, MessageCircle, User, Home, ArrowLeft, Moon, Sun } from 'lucide-react';
+import { Zap, LogOut, Calendar, MessageCircle, User, Home, ArrowLeft, Moon, Sun, CheckSquare, TrendingUp } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import BlurText from '../components/BlurText';
 
@@ -19,6 +19,7 @@ function DashboardLayout() {
   const navigationItems = [
     { id: 'home', label: 'Home', icon: Home, path: '/dashboard' },
     { id: 'schedules', label: 'Schedules', icon: Calendar, path: '/dashboard/schedules' },
+    { id: 'progress', label: 'Progress', icon: TrendingUp, path: '/dashboard/progress' },
     { id: 'chat', label: 'Chat', icon: MessageCircle, path: '/dashboard/chat' },
     { id: 'profile', label: 'Profile', icon: User, path: '/dashboard/profile' },
   ];
@@ -30,6 +31,7 @@ function DashboardLayout() {
     if (currentPath === '/dashboard') return 'Welcome back!';
     if (currentPath === '/dashboard/schedules') return 'My Schedules';
     if (currentPath.includes('/dashboard/schedules/tasks/')) return 'Schedule Tasks';
+    if (currentPath === '/dashboard/progress') return 'Progress Overview';
     if (currentPath === '/dashboard/chat') return 'AI Chat Assistant';
     if (currentPath === '/dashboard/profile') return 'Profile Settings';
     return 'Dashboard';
@@ -39,6 +41,7 @@ function DashboardLayout() {
     if (currentPath === '/dashboard') return `Hello ${user?.name || 'User'}! Ready to tackle your goals today?`;
     if (currentPath === '/dashboard/schedules') return 'Organize your learning journey';
     if (currentPath.includes('/dashboard/schedules/tasks/')) return 'Manage your tasks';
+    if (currentPath === '/dashboard/progress') return 'Track your consistency and achievements';
     if (currentPath === '/dashboard/chat') return 'Get help with scheduling and planning';
     if (currentPath === '/dashboard/profile') return 'Manage your account settings';
     return 'Manage your learning journey';

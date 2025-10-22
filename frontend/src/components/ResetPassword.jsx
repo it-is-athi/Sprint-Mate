@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../api/axios';
 import { Zap, Shield, Lock } from 'lucide-react';
 import Silk from './Silk';
+import PasswordInput from './PasswordInput';
 
 export default function ResetPassword() {
   const location = useLocation();
@@ -15,21 +16,45 @@ export default function ResetPassword() {
   const [errorMsg, setErrorMsg] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Client-side password validation
+  const validatePassword = (password) => {
+    const validations = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /\d/.test(password),
+      special: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\?]/.test(password)
+    };
+    return Object.values(validations).every(Boolean);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg('');
     setSuccessMsg('');
+    
     if (newPassword !== confirmPassword) {
       setErrorMsg('Passwords do not match');
       return;
     }
+    
+    if (!validatePassword(newPassword)) {
+      setErrorMsg('New password must meet all requirements (8+ characters, uppercase, lowercase, number, special character)');
+      return;
+    }
+    
     setIsLoading(true);
     try {
       await api.post('/auth/reset-password', { email, otp, newPassword });
       setSuccessMsg('Password reset successful! Redirecting to login...');
       setTimeout(() => navigate('/login'), 1500);
     } catch (err) {
-      setErrorMsg(err.response?.data?.message || 'Failed to reset password');
+      // Handle backend validation errors
+      if (err.response?.data?.errors) {
+        setErrorMsg(err.response.data.errors.join('. '));
+      } else {
+        setErrorMsg(err.response?.data?.message || 'Failed to reset password');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -75,18 +100,13 @@ export default function ResetPassword() {
 
             <div>
               <label className="block text-gray-300 text-xs font-medium mb-2 uppercase tracking-wide">New Password</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  placeholder="Enter new password"
-                  required
-                  disabled={isLoading}
-                  className="w-full pl-12 pr-4 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:border-white focus:bg-white/10 transition-all duration-300 disabled:opacity-50"
-                />
-              </div>
+              <PasswordInput
+                value={newPassword}
+                onChange={setNewPassword}
+                placeholder="Enter new password"
+                disabled={isLoading}
+                showValidation={true}
+              />
             </div>
 
             <div>

@@ -3,6 +3,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
 const jwt = require('jsonwebtoken');
+const { validatePassword, validateEmail, validateName } = require('../utils/validation');
 
 // Verify OTP
 exports.verifyOtp = async (req, res) => {
@@ -40,6 +41,26 @@ exports.register = async (req, res) => {
     const { name, email, password } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Name, email, and password are required.' });
+    }
+
+    // Validate name
+    const nameValidation = validateName(name);
+    if (!nameValidation.isValid) {
+      return res.status(400).json({ message: nameValidation.error });
+    }
+
+    // Validate email
+    if (!validateEmail(email)) {
+      return res.status(400).json({ message: 'Please provide a valid email address.' });
+    }
+
+    // Validate password
+    const passwordValidation = validatePassword(password);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ 
+        message: 'Password does not meet requirements.',
+        errors: passwordValidation.errors
+      });
     }
 
     // Check if user already exists
@@ -233,6 +254,15 @@ exports.resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Email, OTP, and new password are required.' });
     }
 
+    // Validate new password
+    const passwordValidation = validatePassword(newPassword);
+    if (!passwordValidation.isValid) {
+      return res.status(400).json({ 
+        message: 'New password does not meet requirements.',
+        errors: passwordValidation.errors
+      });
+    }
+
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
@@ -287,17 +317,38 @@ exports.getMe = async (req, res) => {
 // Update user profile
 exports.updateProfile = async (req, res) => {
   try {
-    const { name } = req.body;
+    const { name, phoneNumber, gender } = req.body;
     
     // Validate input
     if (!name || name.trim() === '') {
       return res.status(400).json({ message: 'Name is required' });
     }
     
+    // Validate gender if provided
+    if (gender && !['Male', 'Female', 'Other', 'Prefer not to say'].includes(gender)) {
+      return res.status(400).json({ message: 'Invalid gender value' });
+    }
+    
+    // Validate phone number if provided (basic validation)
+    if (phoneNumber && phoneNumber.trim() !== '' && !/^[\+]?[1-9][\d]{0,15}$/.test(phoneNumber.trim())) {
+      return res.status(400).json({ message: 'Invalid phone number format' });
+    }
+    
+    // Prepare update object
+    const updateData = { name: name.trim() };
+    
+    // Add optional fields if provided
+    if (phoneNumber !== undefined) {
+      updateData.phoneNumber = phoneNumber.trim() || null;
+    }
+    if (gender !== undefined) {
+      updateData.gender = gender || null;
+    }
+    
     // Update user profile
     const user = await User.findByIdAndUpdate(
       req.user.id,
-      { name: name.trim() },
+      updateData,
       { new: true, runValidators: true }
     ).select('-password');
     

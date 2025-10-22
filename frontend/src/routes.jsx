@@ -13,6 +13,7 @@ import SchedulesContainer from './pages/SchedulesContainer';
 import TasksContainer from './pages/TasksContainer';
 import ChatPage from './pages/ChatPage';
 import ProfileContainer from './pages/ProfileContainer';
+import ProgressContainer from './pages/ProgressContainer';
 
 export default function AppRoutes() {
   return (
@@ -26,8 +27,10 @@ export default function AppRoutes() {
       {/* Dashboard with nested routes */}
       <Route path="/dashboard" element={<DashboardLayout />}>
         <Route index element={<HomeContainer />} />
+        <Route path="home" element={<HomeContainer />} />
         <Route path="schedules" element={<SchedulesContainer />} />
         <Route path="schedules/tasks/:scheduleId" element={<TasksContainer />} />
+        <Route path="progress" element={<ProgressContainer />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="profile" element={<ProfileContainer />} />
       </Route>

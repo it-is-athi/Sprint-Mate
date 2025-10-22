@@ -14,6 +14,7 @@ function SchedulesContainer() {
   const [scheduleToDelete, setScheduleToDelete] = useState(null);
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [editForm, setEditForm] = useState({ schedule_title: '', description: '' });
+  const [selectedRepeatPattern, setSelectedRepeatPattern] = useState('daily');
 
   useEffect(() => {
     fetchSchedules();
@@ -48,6 +49,7 @@ function SchedulesContainer() {
   };
 
   const handleCreateClick = () => {
+    setSelectedRepeatPattern('daily'); // Reset to default
     setShowCreateModal(true);
   };
 
@@ -218,6 +220,8 @@ function SchedulesContainer() {
                     </label>
                     <select
                       name="repeat_pattern"
+                      value={selectedRepeatPattern}
+                      onChange={(e) => setSelectedRepeatPattern(e.target.value)}
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                     >
                       <option value="daily">Daily</option>
@@ -256,18 +260,20 @@ function SchedulesContainer() {
                     <p className="text-xs text-gray-500 mt-1">AI will use this as guidance if provided, or create topics automatically from the schedule title</p>
                   </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
-                      End Date *
-                    </label>
-                    <input
-                      type="date"
-                      name="end_date"
-                      required
-                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Determines how many tasks AI will create (Oct 1-30 daily = 30 tasks)</p>
-                  </div>
+                  {selectedRepeatPattern !== 'once' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        End Date *
+                      </label>
+                      <input
+                        type="date"
+                        name="end_date"
+                        required={selectedRepeatPattern !== 'once'}
+                        className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">Determines how many tasks AI will create (Oct 1-30 daily = 30 tasks)</p>
+                    </div>
+                  )}
                 </div>
               </div>
 

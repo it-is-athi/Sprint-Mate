@@ -1,11 +1,13 @@
 import React, { useContext, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import ProfilePage from '../pages/ProfilePage';
 import api from '../api/axios';
 
 function ProfileContainer() {
-  const { user, updateUser } = useContext(AuthContext);
+  const { user, updateUser, logout } = useContext(AuthContext);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const updateProfile = async (profileData) => {
     try {
@@ -28,10 +30,24 @@ function ProfileContainer() {
     }
   };
 
+  const handleLogout = async () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      try {
+        await logout();
+        navigate('/login');
+      } catch (error) {
+        console.error('Logout error:', error);
+        // Force redirect even if logout API fails
+        navigate('/login');
+      }
+    }
+  };
+
   return (
     <ProfilePage 
       user={user} 
       onUpdateProfile={updateProfile}
+      onLogout={handleLogout}
       loading={loading}
     />
   );
