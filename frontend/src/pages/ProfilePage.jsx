@@ -67,7 +67,7 @@ function ProfilePage({ user, onUpdateProfile, onLogout, loading }) {
   };
 
   const handleResetPassword = () => {
-    navigate('/reset-password');
+    navigate('/forgot-password');
   };
 
   const handleLogout = () => {
