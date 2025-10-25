@@ -2,19 +2,6 @@
 
 SprintMate is a lightweight productivity web application for managing schedules, tasks, and personal progress. It provides a dashboard-style UI, chat/AI assists, and account management including secure password reset flows. This repository contains both the frontend (React + Vite + Tailwind) and backend (Node.js + Express + MongoDB) implementations.
 
-## Table of Contents
-- About
-- Features
-- Architecture
-- Prerequisites
-- Environment variables
-- Setup & Run (Backend)
-- Setup & Run (Frontend)
-- Important routes
-- Tests
-- Contributing
-- License
-
 ## About
 
 SprintMate is designed to help individuals plan sprints, track progress, create schedules, and manage tasks. It also includes account management (register/login, forgot/reset password flows), and integrations for notifications and AI-assisted chat features.
