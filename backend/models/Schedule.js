@@ -8,6 +8,7 @@ const ScheduleSchema = new mongoose.Schema({
   owner_id: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   description: { type: String }, // Subject or plan description
   repeat_pattern: { type: String, enum: ["once","daily", "weekly", "monthly"], default: "daily" }, // Only in schedule
+  difficulty: { type: String, enum: ["beginner", "intermediate"], default: "beginner" }, // Learning difficulty level
 }, { timestamps: true });
 
 module.exports = mongoose.model("Schedule", ScheduleSchema);

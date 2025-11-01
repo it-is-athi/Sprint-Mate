@@ -17,6 +17,7 @@ function SchedulesContainer() {
   const [selectedRepeatPattern, setSelectedRepeatPattern] = useState('daily');
   const [startingDate, setStartingDate] = useState(new Date().toISOString().split('T')[0]);
   const [endDate, setEndDate] = useState('');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('beginner');
 
   // Handle repeat pattern change
   const handleRepeatPatternChange = (pattern) => {
@@ -29,15 +30,41 @@ function SchedulesContainer() {
 
   // Handle starting date change
   const handleStartingDateChange = (date) => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Prevent selecting past dates
+    if (date < today) {
+      alert('Starting date cannot be in the past. Please select today or a future date.');
+      return;
+    }
+    
     setStartingDate(date);
     // If "once" is selected, auto-fill end date with start date
     if (selectedRepeatPattern === 'once') {
+      setEndDate(date);
+    }
+    // If end date is before the new start date, update it
+    else if (endDate && endDate < date) {
       setEndDate(date);
     }
   };
 
   // Handle end date change
   const handleEndDateChange = (date) => {
+    const today = new Date().toISOString().split('T')[0];
+    
+    // Prevent selecting past dates
+    if (date < today) {
+      alert('End date cannot be in the past. Please select today or a future date.');
+      return;
+    }
+    
+    // Prevent selecting end date before start date
+    if (date < startingDate) {
+      alert('End date cannot be before start date.');
+      return;
+    }
+    
     setEndDate(date);
     // If "once" is selected and end date differs from start date, auto-fill start date
     if (selectedRepeatPattern === 'once' && date && date !== startingDate) {
@@ -217,9 +244,23 @@ function SchedulesContainer() {
             <form onSubmit={(e) => {
               e.preventDefault();
               
+              const today = new Date().toISOString().split('T')[0];
+              
+              // Validate starting date is not in the past
+              if (startingDate < today) {
+                alert('Starting date cannot be in the past. Please select today or a future date.');
+                return;
+              }
+              
               // Validate date range
               if (selectedRepeatPattern !== 'once' && endDate && new Date(endDate) < new Date(startingDate)) {
                 alert('End date cannot be before start date');
+                return;
+              }
+              
+              // Validate end date is not in the past
+              if (selectedRepeatPattern !== 'once' && endDate && endDate < today) {
+                alert('End date cannot be in the past. Please select today or a future date.');
                 return;
               }
               
@@ -229,7 +270,8 @@ function SchedulesContainer() {
                 description: formData.get('description'),
                 repeat_pattern: selectedRepeatPattern,
                 starting_date: startingDate,
-                end_date: selectedRepeatPattern === 'once' ? startingDate : endDate
+                end_date: selectedRepeatPattern === 'once' ? startingDate : endDate,
+                difficulty: selectedDifficulty
               };
               createSchedule(scheduleData);
             }}>
@@ -269,12 +311,28 @@ function SchedulesContainer() {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Difficulty Level
+                    </label>
+                    <select
+                      name="difficulty"
+                      value={selectedDifficulty}
+                      onChange={(e) => setSelectedDifficulty(e.target.value)}
+                      className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+                    >
+                      <option value="beginner">Beginner (Start from scratch)</option>
+                      <option value="intermediate">Intermediate (Have basic knowledge)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
                       Starting Date *
                     </label>
                     <input
                       type="date"
                       name="starting_date"
                       required
+                      min={new Date().toISOString().split('T')[0]}
                       value={startingDate}
                       onChange={(e) => handleStartingDateChange(e.target.value)}
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
@@ -306,6 +364,7 @@ function SchedulesContainer() {
                         type="date"
                         name="end_date"
                         required={selectedRepeatPattern !== 'once'}
+                        min={startingDate || new Date().toISOString().split('T')[0]}
                         value={endDate}
                         onChange={(e) => handleEndDateChange(e.target.value)}
                         className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"

@@ -10,6 +10,7 @@ import Aurora from '../components/Aurora'; // Import the Aurora component
 import LightBackground from '../components/LightBackground'; // Import the Light background component
 import { useTheme } from '../context/ThemeContext'; // Import theme context
 import SplitText from '../components/SplitText'; // Import SplitText component
+import '../styles/GeminiChat.css'; // Import CSS for hiding scrollbar
 
 function ChatPage() {
   const { theme } = useTheme(); // Get current theme

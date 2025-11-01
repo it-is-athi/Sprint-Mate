@@ -50,6 +50,9 @@ exports.generateScheduleFromForm = async (scheduleData) => {
        - **NO PRACTICAL TASKS:** Absolutely no evaluation, maintainability, testing, deployment, or any practical implementation tasks
        - **LEARNING CONCEPTS ONLY:** Focus on understanding, studying, and learning theoretical knowledge
        - **This is a STUDY SCHEDULER not a project management tool**
+    4. **DIFFICULTY-BASED CURRICULUM DESIGN:**
+       - **If difficulty is 'beginner':** You MUST design the curriculum assuming the user has ZERO prior knowledge of the subject. Start with the absolute, most fundamental "Day 1" concepts. The initial tasks must be simple and build confidence. The entire schedule must be strictly progressive. Each task must logically build upon the concepts learned in the previous task. Do NOT introduce advanced or complex topics (like Object-Oriented Programming or advanced data structures in a programming course) until ALL core fundamentals are thoroughly covered.
+       - **If difficulty is 'intermediate':** You can assume the user has a solid understanding of the fundamental concepts. Do not waste time on "Hello World" or basic definitions. The curriculum should begin with a brief review of core concepts or immediately dive into next level concepts. Focus the plan on advanced techniques, libraries/tools, and best practices related to the topic. The tasks should be more challenging and cover a wider scope than a beginner plan.
     4. **THEORETICAL CONCEPTS ONLY:**
        - **Study Topics:** "Understanding Classes Theory", "Concept of Inheritance", "Polymorphism Theory", "Array Fundamentals"
        - **Learning Focus:** What is X?, How does X work?, Understanding X concept, X theory and principles
@@ -78,11 +81,15 @@ exports.generateScheduleFromForm = async (scheduleData) => {
        - **daily**: Create a task for EACH DAY in the date range (STRICTLY within start and end dates)
        - **weekly**: Create a task for EACH WEEK in the date range (STRICTLY within start and end dates)
        - **monthly**: Create a task for EACH MONTH in the date range (STRICTLY within start and end dates)
-       - **once**: Create only 1 task
+       - **once**: Create EXACTLY ONE TASK ONLY - No matter what the subject is, create only 1 single task
+       
+       **CRITICAL RULE FOR "ONCE" PATTERN:**
+       If repeat_pattern is "once", the tasks_data array must contain EXACTLY 1 task object - no more, no less.
        
        **CRITICAL DATE CALCULATION EXAMPLES:**
        - Nov 1 to Dec 1 (weekly): Create tasks on Nov 1, Nov 8, Nov 15, Nov 22, Nov 29 ONLY (5 tasks max)
        - Nov 1 to Dec 1 (daily): Create tasks from Nov 1 to Dec 1 inclusive (31 tasks)
+       - Nov 4 to Nov 4 (once): Create EXACTLY 1 task on Nov 4 (regardless of subject complexity)
        - DO NOT create tasks beyond the end_date under any circumstances
     10. **Task Fields (ALL REQUIRED - THEORY FOCUSED):**
        - **name**: Theoretical concept names like "Understanding Classes Theory", "Encapsulation Concepts", "Array Theory Fundamentals", "Inheritance Principles"
@@ -91,7 +98,20 @@ exports.generateScheduleFromForm = async (scheduleData) => {
        - **description**: Clear explanation of the theoretical concept students will study and understand
        - **status**: Always "pending"
        - **missed**: Always false
-    11. **THEORETICAL LEARNING PROGRESSION EXAMPLES (One Theory Per Day):**
+    11. **SPECIAL RULE FOR "ONCE" PATTERN:**
+       - **EXACTLY ONE TASK**: If repeat_pattern is "once", create ONLY 1 task in the tasks_data array
+       - **Single Overview Task**: The one task should provide a comprehensive overview of the entire subject
+       - **Task Name**: Use the schedule title or a summary name like "ADS Revision Overview" or "Complete Python Basics Study"
+       - **Task Topic**: Cover the main topic broadly rather than breaking it down
+    12. **THEORETICAL LEARNING PROGRESSION EXAMPLES (One Theory Per Day):**
+       - **ADS Revision (Once Pattern):** 
+         EXACTLY 1 task: "ADS Complete Revision" - comprehensive overview covering all ADS concepts in one study session
+       - **Python Basics (Once Pattern):** 
+         EXACTLY 1 task: "Python Fundamentals Overview" - broad coverage of Python basics in one study session
+       - **OOP Concepts (Once Pattern):** 
+         EXACTLY 1 task: "Object-Oriented Programming Overview" - comprehensive OOP concepts in one study session
+       
+       **MULTI-DAY PATTERNS (Daily/Weekly/Monthly):****
        - **OOP Theory:** "Introduction to Programming Concepts" → "Class Theory and Principles" → "Object Concepts" → "Method Theory" → "Constructor Concepts" → "Encapsulation Theory" → "Inheritance Principles" → "Polymorphism Concepts" → "Abstraction Theory"
        - **Data Structure Theory:** "Data Organization Concepts" → "Array Theory" → "Array Memory Concepts" → "List Theory" → "Stack Concepts" → "Queue Theory" → "Tree Fundamentals" → "Graph Theory Basics"
        - **Algorithm Theory:** "Algorithm Fundamentals" → "Time Complexity Theory" → "Space Complexity Concepts" → "Search Algorithm Theory" → "Sort Algorithm Principles" → "Recursion Concepts"
@@ -130,20 +150,31 @@ exports.generateScheduleFromForm = async (scheduleData) => {
     - **Medium duration (1-2 months):** Cover fundamentals + simple applications
     - **Long duration (3+ months):** Fundamentals + intermediate + some advanced topics
 
-    **SUBJECT-SPECIFIC BEGINNER FOCUS (One Concept Per Day):**
-    - **Object-Oriented Programming:** 
-      Day 1: "Introduction to Programming" → Day 2: "What are Classes?" → Day 3: "Understanding Objects" → Day 4: "Creating Your First Class" → Day 5: "Object Methods" → Day 6: "Constructors" → Day 7: "What is Encapsulation?" → Day 8: "Implementing Encapsulation" → Day 9: "What is Inheritance?" → Day 10: "Basic Inheritance Implementation"
-    - **Data Structures:** 
-      Day 1: "What is Data?" → Day 2: "Introduction to Arrays" → Day 3: "Array Declaration and Initialization" → Day 4: "Accessing Array Elements" → Day 5: "Array Operations" → Day 6: "Introduction to Lists" → Day 7: "List vs Array Differences" → Day 8: "Stack Concept" → Day 9: "Stack Operations"
-    - **Web Development:** 
-      Day 1: "HTML Basics" → Day 2: "Common HTML Tags" → Day 3: "HTML Document Structure" → Day 4: "CSS Introduction" → Day 5: "CSS Selectors" → Day 6: "CSS Properties and Values" → Day 7: "JavaScript Basics" → Day 8: "Variables in JavaScript" → Day 9: "Functions in JavaScript"
-    - **Algorithms:** 
-      Day 1: "What are Algorithms?" → Day 2: "Algorithm Basics" → Day 3: "Introduction to Loops" → Day 4: "For Loop Implementation" → Day 5: "While Loop Implementation" → Day 6: "Linear Search Concept" → Day 7: "Linear Search Implementation" → Day 8: "Introduction to Sorting"
-    - **Database:** 
-      Day 1: "What are Databases?" → Day 2: "Database Tables Concept" → Day 3: "Rows and Columns" → Day 4: "Primary Keys" → Day 5: "Basic SELECT Statement" → Day 6: "WHERE Clause" → Day 7: "INSERT Statement" → Day 8: "UPDATE Statement"
+    **SUBJECT-SPECIFIC EXAMPLES BY DIFFICULTY (One Concept Per Day):**
+    - **Python Basics (Beginner):** 
+      Day 1: "What is Programming?" → Day 2: "Introduction to Python" → Day 3: "Variables and Data Types" → Day 4: "Basic Input/Output" → Day 5: "Numbers and Strings" → Day 6: "Basic Operators" → Day 7: "Conditional Statements" → Day 8: "Loops Basics" → Day 9: "For Loops" → Day 10: "While Loops" → Day 11: "Functions Introduction" → Day 12: "Function Parameters" → Day 13: "Lists Basics" → Day 14: "List Operations"
+    - **Python Basics (Intermediate):** 
+      Day 1: "Advanced Data Structures" → Day 2: "Object-Oriented Programming Theory" → Day 3: "Class and Object Concepts" → Day 4: "Inheritance Theory" → Day 5: "Polymorphism Concepts" → Day 6: "File Handling Theory" → Day 7: "Exception Handling" → Day 8: "Modules and Packages"
+    - **Object-Oriented Programming (Beginner):** 
+      Day 1: "Introduction to Programming Concepts" → Day 2: "What is Object-Oriented Programming?" → Day 3: "Class Theory and Principles" → Day 4: "Object Concepts" → Day 5: "Method Theory" → Day 6: "Constructor Concepts" → Day 7: "Encapsulation Theory" → Day 8: "Inheritance Principles" → Day 9: "Polymorphism Concepts"
+    - **Object-Oriented Programming (Intermediate):** 
+      Day 1: "Advanced OOP Concepts" → Day 2: "Design Patterns Theory" → Day 3: "SOLID Principles" → Day 4: "Advanced Inheritance" → Day 5: "Interface and Abstract Classes" → Day 6: "Composition vs Inheritance"
+    - **Web Development (Beginner):** 
+      Day 1: "What is Web Development?" → Day 2: "HTML Basics" → Day 3: "Common HTML Tags" → Day 4: "HTML Document Structure" → Day 5: "CSS Introduction" → Day 6: "CSS Selectors" → Day 7: "Basic Styling" → Day 8: "JavaScript Introduction"
+    - **Web Development (Intermediate):** 
+      Day 1: "Advanced CSS Concepts" → Day 2: "JavaScript ES6 Features" → Day 3: "DOM Manipulation" → Day 4: "Asynchronous JavaScript" → Day 5: "Framework Introduction" → Day 6: "API Integration Theory"
 
     **Schedule Details Provided:**
     ${JSON.stringify(scheduleData, null, 2)}
+
+    **CRITICAL: ALWAYS CHECK THE DIFFICULTY LEVEL:**
+    - If difficulty is "beginner": Start with absolute fundamentals, assume zero knowledge
+    - If difficulty is "intermediate": Skip basics, focus on advanced concepts and applications
+    - Tailor the entire curriculum progression based on the difficulty level provided
+
+    **CRITICAL: ALWAYS CHECK THE REPEAT PATTERN:**
+    - If repeat_pattern is "once": Create EXACTLY 1 task in tasks_data array - NO EXCEPTIONS
+    - If repeat_pattern is "daily", "weekly", or "monthly": Create multiple tasks based on date range
 
     **FINAL REMINDER - LEARNING SCHEDULER FOR THEORY ONLY:**
     ✅ DO: Create theoretical learning tasks like "Understanding Variable Theory", "Class Concepts", "Array Theory", "Inheritance Principles"

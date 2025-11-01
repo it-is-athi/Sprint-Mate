@@ -55,8 +55,14 @@ exports.createScheduleFromForm = async (req, res) => {
 
     console.log(`Original tasks generated: ${fullSchedule.tasks_data.length}, Valid tasks within range: ${validTasks.length}`);
     
-    // Update the tasks data with filtered tasks
-    fullSchedule.tasks_data = validTasks;
+    // Additional validation for "once" pattern - should have exactly 1 task
+    if (scheduleData.repeat_pattern === 'once' && validTasks.length !== 1) {
+      console.log(`Warning: "once" pattern should have exactly 1 task, but ${validTasks.length} tasks were generated. Keeping only the first task.`);
+      fullSchedule.tasks_data = validTasks.slice(0, 1); // Keep only the first task
+    } else {
+      // Update the tasks data with filtered tasks
+      fullSchedule.tasks_data = validTasks;
+    }
 
     // Create the schedule and tasks
     const result = await scheduleService.createScheduleAndTasks(

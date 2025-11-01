@@ -47,22 +47,17 @@ function HomeContainer() {
       const response = await api.get('/tasks/user-tasks');
       console.log('User tasks response:', response.data);
       
-      // Filter tasks for the current week (7 days including today)
-      const today = new Date();
-      const startOfWeek = new Date(today);
-      startOfWeek.setDate(today.getDate() - 3); // Start 3 days before today
-      startOfWeek.setHours(0, 0, 0, 0);
+      // Get all user tasks - let the WeekCalendar component filter by date as needed
+      // This ensures dots appear for ALL days that have tasks, regardless of date range
+      const weeklyTasks = response.data; // Show all tasks, no date filtering
       
-      const endOfWeek = new Date(today);
-      endOfWeek.setDate(today.getDate() + 3); // End 3 days after today
-      endOfWeek.setHours(23, 59, 59, 999);
+      console.log('All user tasks for calendar (showing dots for all days with tasks):', weeklyTasks);
+      console.log(`Total tasks fetched: ${weeklyTasks.length}`);
       
-      const weeklyTasks = response.data.filter(task => {
-        const taskDate = new Date(task.date);
-        return taskDate >= startOfWeek && taskDate <= endOfWeek;
-      });
+      // Debug: Show dates of all tasks
+      const taskDates = weeklyTasks.map(task => new Date(task.date).toISOString().split('T')[0]);
+      console.log('Task dates:', taskDates);
       
-      console.log('Filtered weekly tasks:', weeklyTasks);
       setWeeklyTasks(weeklyTasks);
     } catch (error) {
       console.error('Error fetching weekly tasks:', error);

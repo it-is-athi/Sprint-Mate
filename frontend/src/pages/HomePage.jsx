@@ -41,8 +41,20 @@ function HomePage({ todaysTasks = [], weeklyTasks = [], updateTaskStatus, user }
   const getTasksForDate = (date) => {
     // Matches tasks for the selected date (YYYY-MM-DD)
     const day = date.toISOString().split('T')[0];
-    // Use weeklyTasks instead of todaysTasks to get tasks for all dates
-    return weeklyTasks.filter(task => new Date(task.date).toISOString().split('T')[0] === day);
+    // Use weeklyTasks (which now contains all user tasks) to get tasks for any date
+    // This ensures dots appear for ALL days that have tasks, not just the current week
+    const tasksForThisDay = weeklyTasks.filter(task => {
+      const taskDateString = new Date(task.date).toISOString().split('T')[0];
+      return taskDateString === day;
+    });
+    
+    // Debug logging to help troubleshoot dot display issues
+    console.log(`Checking date ${day}: found ${tasksForThisDay.length} tasks`);
+    if (tasksForThisDay.length > 0) {
+      console.log(`✅ Tasks found for ${day}:`, tasksForThisDay.map(t => t.name));
+    }
+    
+    return tasksForThisDay;
   };
 
   // --- Sun Progress Component ---
