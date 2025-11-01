@@ -7,6 +7,7 @@ import remarkGfm from 'remark-gfm';
 import { Send, FileText, XCircle, BrainCircuit, FileUp } from 'lucide-react'; // Updated icons
 import { useLocation } from 'react-router-dom';
 import Aurora from '../components/Aurora'; // Import the Aurora component
+import LightBackground from '../components/LightBackground'; // Import the Light background component
 import { useTheme } from '../context/ThemeContext'; // Import theme context
 import SplitText from '../components/SplitText'; // Import SplitText component
 
@@ -183,13 +184,19 @@ Please teach me about this topic with clear explanations and practical examples.
   const textareaRef = useRef(null);
 
   return (
-    <div className={`relative flex flex-col h-full w-full overflow-hidden font-sans ${lightTheme ? 'bg-white' : 'bg-black'}`}>
-      {/* Aurora Background */}
+    <div className={`relative flex flex-col h-full w-full overflow-hidden font-sans ${
+      lightTheme ? 'bg-gradient-to-br from-yellow-50 via-yellow-100 to-amber-100' : 'bg-black'
+    }`}>
+      {/* Background */}
       <div className="absolute inset-0 z-0 opacity-70">
-        <Aurora 
-          isLightMode={lightTheme}
-          colorStops={lightTheme ? ['#FFFF00', '#FFA500', '#FFFF00'] : ['#FFEA00', '#FFBF00', '#FFEA00']} 
-        />
+        {lightTheme ? (
+          <LightBackground />
+        ) : (
+          <Aurora 
+            isLightMode={false}
+            colorStops={['#FFEA00', '#FFBF00', '#FFEA00']} 
+          />
+        )}
       </div>
 
       {/* Main Content */}

@@ -15,6 +15,35 @@ function SchedulesContainer() {
   const [editingSchedule, setEditingSchedule] = useState(null);
   const [editForm, setEditForm] = useState({ schedule_title: '', description: '' });
   const [selectedRepeatPattern, setSelectedRepeatPattern] = useState('daily');
+  const [startingDate, setStartingDate] = useState(new Date().toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState('');
+
+  // Handle repeat pattern change
+  const handleRepeatPatternChange = (pattern) => {
+    setSelectedRepeatPattern(pattern);
+    // If "once" is selected, auto-fill end date with start date
+    if (pattern === 'once' && startingDate) {
+      setEndDate(startingDate);
+    }
+  };
+
+  // Handle starting date change
+  const handleStartingDateChange = (date) => {
+    setStartingDate(date);
+    // If "once" is selected, auto-fill end date with start date
+    if (selectedRepeatPattern === 'once') {
+      setEndDate(date);
+    }
+  };
+
+  // Handle end date change
+  const handleEndDateChange = (date) => {
+    setEndDate(date);
+    // If "once" is selected and end date differs from start date, auto-fill start date
+    if (selectedRepeatPattern === 'once' && date && date !== startingDate) {
+      setStartingDate(date);
+    }
+  };
 
   useEffect(() => {
     fetchSchedules();
@@ -187,13 +216,20 @@ function SchedulesContainer() {
             
             <form onSubmit={(e) => {
               e.preventDefault();
+              
+              // Validate date range
+              if (selectedRepeatPattern !== 'once' && endDate && new Date(endDate) < new Date(startingDate)) {
+                alert('End date cannot be before start date');
+                return;
+              }
+              
               const formData = new FormData(e.target);
               const scheduleData = {
                 schedule_title: formData.get('schedule_title'),
                 description: formData.get('description'),
-                repeat_pattern: formData.get('repeat_pattern') || 'daily',
-                starting_date: formData.get('starting_date') || new Date().toISOString().split('T')[0],
-                end_date: formData.get('end_date')
+                repeat_pattern: selectedRepeatPattern,
+                starting_date: startingDate,
+                end_date: selectedRepeatPattern === 'once' ? startingDate : endDate
               };
               createSchedule(scheduleData);
             }}>
@@ -221,7 +257,7 @@ function SchedulesContainer() {
                     <select
                       name="repeat_pattern"
                       value={selectedRepeatPattern}
-                      onChange={(e) => setSelectedRepeatPattern(e.target.value)}
+                      onChange={(e) => handleRepeatPatternChange(e.target.value)}
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                     >
                       <option value="daily">Daily</option>
@@ -239,7 +275,8 @@ function SchedulesContainer() {
                       type="date"
                       name="starting_date"
                       required
-                      defaultValue={new Date().toISOString().split('T')[0]}
+                      value={startingDate}
+                      onChange={(e) => handleStartingDateChange(e.target.value)}
                       className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                     />
                   </div>
@@ -260,7 +297,7 @@ function SchedulesContainer() {
                     <p className="text-xs text-gray-500 mt-1">AI will use this as guidance if provided, or create topics automatically from the schedule title</p>
                   </div>
 
-                  {selectedRepeatPattern !== 'once' && (
+                  {selectedRepeatPattern !== 'once' ? (
                     <div>
                       <label className="block text-sm font-medium text-gray-300 mb-2">
                         End Date *
@@ -269,9 +306,26 @@ function SchedulesContainer() {
                         type="date"
                         name="end_date"
                         required={selectedRepeatPattern !== 'once'}
+                        value={endDate}
+                        onChange={(e) => handleEndDateChange(e.target.value)}
                         className="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
                       />
-                      <p className="text-xs text-gray-500 mt-1">Determines how many tasks AI will create (Oct 1-30 daily = 30 tasks)</p>
+                      <p className="text-xs text-gray-500 mt-1">Determines how many tasks AI will create (Nov 1 to Dec 1 weekly = 5 tasks max)</p>
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        End Date * (Same as start date for single task)
+                      </label>
+                      <input
+                        type="date"
+                        name="end_date"
+                        required
+                        value={endDate}
+                        readOnly
+                        className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-gray-400 cursor-not-allowed"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">For one-time tasks, the end date is automatically set to match the start date</p>
                     </div>
                   )}
                 </div>

@@ -43,33 +43,113 @@ exports.generateScheduleFromForm = async (scheduleData) => {
 
     **CRITICAL TASK GENERATION RULES:**
     1. **Use Exact Title:** Use the provided schedule_title exactly as given.
-    2. **Generate Professional Description:** Create a 2-line professional summary of the learning path you designed. This should describe what the schedule covers and the learning progression, regardless of whether user provided description or not.
-    3. **Content Strategy:** ${hasUserDescription 
-        ? 'User provided specific topics/description - use this as guidance but expand with your expertise to create comprehensive learning progression.'
-        : 'No specific topics provided - research the schedule title and create a complete, logical curriculum from your knowledge base.'
+    2. **Generate Professional Description:** Create a 2-line professional summary of the learning path you designed. This should describe what the scope and learning progression.
+    3. **THEORY TOPICS ONLY - LEARNING SCHEDULER:** 
+       - **Target Audience:** Students learning theoretical concepts independently
+       - **PURE THEORY FOCUS:** Create tasks for studying and understanding theoretical concepts ONLY
+       - **NO PRACTICAL TASKS:** Absolutely no evaluation, maintainability, testing, deployment, or any practical implementation tasks
+       - **LEARNING CONCEPTS ONLY:** Focus on understanding, studying, and learning theoretical knowledge
+       - **This is a STUDY SCHEDULER not a project management tool**
+    4. **THEORETICAL CONCEPTS ONLY:**
+       - **Study Topics:** "Understanding Classes Theory", "Concept of Inheritance", "Polymorphism Theory", "Array Fundamentals"
+       - **Learning Focus:** What is X?, How does X work?, Understanding X concept, X theory and principles
+       - **NO PRACTICAL WORDS:** Avoid "implementation", "building", "creating projects", "evaluation", "maintenance", "testing"
+       - **PURE KNOWLEDGE:** Focus on theoretical understanding and conceptual learning
+    5. **ONE THEORETICAL CONCEPT PER TASK:**
+       - **Break Down Complex Topics:** If a theory is complex, split it across 2-3 days
+       - **Examples:** "Encapsulation Theory" and "Polymorphism Theory" should be separate learning tasks
+       - **Inheritance Theory:** Break into "Basic Inheritance Concepts", "Types of Inheritance Theory", "Inheritance Principles"
+       - **No Topic Combination:** Each day should focus on understanding ONE theoretical concept thoroughly
+    6. **REFERENCE TRUSTED EDUCATIONAL SOURCES:**
+       - **Follow GeeksforGeeks theoretical explanations** for programming concepts
+       - **Use standard academic theory progression** found in computer science textbooks
+       - **Research theoretical learning sequences** used in universities
+       - **Focus on conceptual understanding** not practical implementation
+    7. **Content Strategy:** ${hasUserDescription 
+        ? 'User provided specific topics/description - use this as guidance but break down into individual THEORETICAL learning concepts, one per task.'
+        : 'Research the subject and create a logical learning sequence of individual THEORETICAL concepts, one per task.'
     }
-    4. **Calculate Task Count:** Based on repeat_pattern and date range (starting_date to end_date):
-       - **daily**: Create a task for EACH DAY in the date range
-       - **weekly**: Create a task for EACH WEEK in the date range  
-       - **monthly**: Create a task for EACH MONTH in the date range
+    8. **THEORETICAL LEARNING PROGRESSION:**
+       - **Foundation Focus:** Spend 60-70% of time on fundamental theoretical concepts
+       - **Conceptual Understanding:** Focus on "What is?", "How does it work?", "Why is it important?"
+       - **Theory Before Practice:** Students need to understand concepts theoretically first
+       - **No Implementation Tasks:** This is for learning theory, not building anything
+    8. **Calculate Task Count:** Based on repeat_pattern and date range (starting_date to end_date):
+       - **daily**: Create a task for EACH DAY in the date range (STRICTLY within start and end dates)
+       - **weekly**: Create a task for EACH WEEK in the date range (STRICTLY within start and end dates)
+       - **monthly**: Create a task for EACH MONTH in the date range (STRICTLY within start and end dates)
        - **once**: Create only 1 task
-    5. **Task Fields (ALL REQUIRED):**
-       - **name**: Descriptive, natural task names like "Introduction to Operating Systems", "Process Management Concepts", "Memory Allocation Techniques"
-       - **topic**: Specific learning topic for that session
+       
+       **CRITICAL DATE CALCULATION EXAMPLES:**
+       - Nov 1 to Dec 1 (weekly): Create tasks on Nov 1, Nov 8, Nov 15, Nov 22, Nov 29 ONLY (5 tasks max)
+       - Nov 1 to Dec 1 (daily): Create tasks from Nov 1 to Dec 1 inclusive (31 tasks)
+       - DO NOT create tasks beyond the end_date under any circumstances
+    10. **Task Fields (ALL REQUIRED - THEORY FOCUSED):**
+       - **name**: Theoretical concept names like "Understanding Classes Theory", "Encapsulation Concepts", "Array Theory Fundamentals", "Inheritance Principles"
+       - **topic**: The specific theoretical concept for learning that day (ONE theory only)
        - **date**: Exact date for each task in YYYY-MM-DD format
-       - **description**: Detailed learning objectives for that session
+       - **description**: Clear explanation of the theoretical concept students will study and understand
        - **status**: Always "pending"
        - **missed**: Always false
-    6. **Research & Progression:** ${hasUserDescription
-        ? 'Use the provided topics as foundation, but enhance with additional relevant concepts for comprehensive learning.'
-        : 'Research the schedule subject thoroughly and create a complete learning path with proper skill progression.'
+    11. **THEORETICAL LEARNING PROGRESSION EXAMPLES (One Theory Per Day):**
+       - **OOP Theory:** "Introduction to Programming Concepts" → "Class Theory and Principles" → "Object Concepts" → "Method Theory" → "Constructor Concepts" → "Encapsulation Theory" → "Inheritance Principles" → "Polymorphism Concepts" → "Abstraction Theory"
+       - **Data Structure Theory:** "Data Organization Concepts" → "Array Theory" → "Array Memory Concepts" → "List Theory" → "Stack Concepts" → "Queue Theory" → "Tree Fundamentals" → "Graph Theory Basics"
+       - **Algorithm Theory:** "Algorithm Fundamentals" → "Time Complexity Theory" → "Space Complexity Concepts" → "Search Algorithm Theory" → "Sort Algorithm Principles" → "Recursion Concepts"
+       - **Database Theory:** "Database Concepts" → "Table Theory" → "Relationship Concepts" → "Normalization Theory" → "SQL Theory" → "Join Concepts" → "Index Theory"
+    12. **ABSOLUTELY FORBIDDEN - NO PRACTICAL TASKS:**
+       - Course/Project management: "Course Review", "Project Planning", "Course Update", "Course Promotion"
+       - Practical implementation: "Building", "Creating", "Implementing", "Developing", "Coding"
+       - Evaluation/Testing: "Testing", "Evaluation", "Assessment", "Performance Analysis"
+       - Maintenance/Operations: "Maintenance", "Deployment", "Monitoring", "Optimization"
+       - Advanced practical concepts: "Scalability", "Maintainability", "Reliability", "Usability"
+       - ONLY THEORETICAL LEARNING CONCEPTS ALLOWED
+    13. **Research & Progression:** ${hasUserDescription
+        ? 'Use the provided topics as foundation, but break each topic into individual daily THEORETICAL learning concepts.'
+        : 'Research the schedule subject on GeeksforGeeks theory sections, educational sites, and create a logical sequence of individual THEORETICAL concepts for studying.'
     }
 
     **IMPORTANT DESCRIPTION REQUIREMENT:**
     Always generate a professional 2-line description in the schedule_data that summarizes the complete learning journey you created. This should be engaging and informative, describing the scope and progression of the curriculum.
 
+    **TOPICS TO PRIORITIZE (Individual THEORETICAL concepts per day):**
+    - Core programming theory (variable concepts, data type theory, operator principles)
+    - Object-oriented theory (class concepts, object theory, method principles - each as separate topics)
+    - Data structure theory (array concepts, list theory, stack principles - each as separate topics)
+    - Algorithm theory (search concepts, sort principles - each as separate topics)
+    - Language fundamentals and theoretical constructs
+
+    **TOPICS TO AVOID (Practical/Implementation tasks):**
+    - Any practical implementation or coding tasks
+    - Project building or development activities
+    - Evaluation, testing, or assessment tasks
+    - Maintenance, deployment, or operational concepts
+    - Any task that involves "doing" rather than "learning theory"
+
+    **DURATION-BASED PLANNING:**
+    - **Short duration (1-2 weeks):** Focus ONLY on absolute basics
+    - **Medium duration (1-2 months):** Cover fundamentals + simple applications
+    - **Long duration (3+ months):** Fundamentals + intermediate + some advanced topics
+
+    **SUBJECT-SPECIFIC BEGINNER FOCUS (One Concept Per Day):**
+    - **Object-Oriented Programming:** 
+      Day 1: "Introduction to Programming" → Day 2: "What are Classes?" → Day 3: "Understanding Objects" → Day 4: "Creating Your First Class" → Day 5: "Object Methods" → Day 6: "Constructors" → Day 7: "What is Encapsulation?" → Day 8: "Implementing Encapsulation" → Day 9: "What is Inheritance?" → Day 10: "Basic Inheritance Implementation"
+    - **Data Structures:** 
+      Day 1: "What is Data?" → Day 2: "Introduction to Arrays" → Day 3: "Array Declaration and Initialization" → Day 4: "Accessing Array Elements" → Day 5: "Array Operations" → Day 6: "Introduction to Lists" → Day 7: "List vs Array Differences" → Day 8: "Stack Concept" → Day 9: "Stack Operations"
+    - **Web Development:** 
+      Day 1: "HTML Basics" → Day 2: "Common HTML Tags" → Day 3: "HTML Document Structure" → Day 4: "CSS Introduction" → Day 5: "CSS Selectors" → Day 6: "CSS Properties and Values" → Day 7: "JavaScript Basics" → Day 8: "Variables in JavaScript" → Day 9: "Functions in JavaScript"
+    - **Algorithms:** 
+      Day 1: "What are Algorithms?" → Day 2: "Algorithm Basics" → Day 3: "Introduction to Loops" → Day 4: "For Loop Implementation" → Day 5: "While Loop Implementation" → Day 6: "Linear Search Concept" → Day 7: "Linear Search Implementation" → Day 8: "Introduction to Sorting"
+    - **Database:** 
+      Day 1: "What are Databases?" → Day 2: "Database Tables Concept" → Day 3: "Rows and Columns" → Day 4: "Primary Keys" → Day 5: "Basic SELECT Statement" → Day 6: "WHERE Clause" → Day 7: "INSERT Statement" → Day 8: "UPDATE Statement"
+
     **Schedule Details Provided:**
     ${JSON.stringify(scheduleData, null, 2)}
+
+    **FINAL REMINDER - LEARNING SCHEDULER FOR THEORY ONLY:**
+    ✅ DO: Create theoretical learning tasks like "Understanding Variable Theory", "Class Concepts", "Array Theory", "Inheritance Principles"
+    ❌ DON'T: Create ANY practical tasks with words like "Building", "Creating", "Implementing", "Testing", "Evaluation", "Maintenance", "Course", "Project"
+    
+    **THIS IS A STUDY SCHEDULER FOR THEORETICAL CONCEPTS ONLY - NO PRACTICAL IMPLEMENTATION**
 
     **IMPORTANT:** The tasks_data array must contain individual task objects that match the Task schema exactly. Each task must have all required fields.
 

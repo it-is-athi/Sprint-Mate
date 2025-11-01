@@ -27,11 +27,36 @@ exports.createScheduleFromForm = async (req, res) => {
       });
     }
 
+    // Validate date range
+    const validateStartDate = new Date(scheduleData.starting_date);
+    const validateEndDate = new Date(scheduleData.end_date);
+    
+    if (validateEndDate < validateStartDate) {
+      return res.status(400).json({ 
+        message: 'End date cannot be before start date' 
+      });
+    }
+
     // Add owner_id to the schedule data
     scheduleData.owner_id = userId;
 
     // Generate tasks using AI based on the complete schedule details
     const fullSchedule = await aiService.generateScheduleFromForm(scheduleData);
+
+    // Validate and filter tasks to ensure they don't exceed the end date
+    const startDate = new Date(scheduleData.starting_date);
+    const endDate = new Date(scheduleData.end_date);
+    
+    // Filter out any tasks that are beyond the end date
+    const validTasks = fullSchedule.tasks_data.filter(task => {
+      const taskDate = new Date(task.date);
+      return taskDate >= startDate && taskDate <= endDate;
+    });
+
+    console.log(`Original tasks generated: ${fullSchedule.tasks_data.length}, Valid tasks within range: ${validTasks.length}`);
+    
+    // Update the tasks data with filtered tasks
+    fullSchedule.tasks_data = validTasks;
 
     // Create the schedule and tasks
     const result = await scheduleService.createScheduleAndTasks(
