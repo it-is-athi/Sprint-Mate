@@ -173,9 +173,13 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
               {currentIndex > 0 && (
                 <button
                   onClick={prevWindow}
-                  className="bg-gray-800/90 hover:bg-gray-700 border border-yellow-600/50 rounded-full p-3 transition-all duration-200 hover:scale-110 shadow-xl"
+                  className={`border rounded-full p-3 transition-all duration-200 hover:scale-110 shadow-xl ${
+                    lightTheme 
+                      ? 'bg-white/90 hover:bg-white border-yellow-600/50 hover:border-yellow-700/70' 
+                      : 'bg-gray-800/90 hover:bg-gray-700 border-yellow-600/50'
+                  }`}
                 >
-                  <ChevronLeft className="w-5 h-5 text-yellow-400" />
+                  <ChevronLeft className={`w-5 h-5 ${lightTheme ? 'text-yellow-600' : 'text-yellow-400'}`} />
                 </button>
               )}
             </div>
@@ -220,7 +224,9 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                           {/* Study with AI Button - Always visible */}
                           <button
                             onClick={(e) => handleStudyWithAI(e, task)}
-                            className="w-full px-3 py-2 bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 text-purple-100 rounded-lg hover:bg-purple-500/30 hover:border-purple-400/50 transition-all duration-200 text-xs font-medium flex items-center justify-center gap-2"
+                            className={`w-full px-3 py-2 bg-purple-500/20 backdrop-blur-sm border border-purple-400/30 rounded-lg hover:bg-purple-500/30 hover:border-purple-400/50 transition-all duration-200 text-xs font-medium flex items-center justify-center gap-2 ${
+                              lightTheme ? 'text-purple-700 hover:text-purple-800' : 'text-purple-100'
+                            }`}
                           >
                             🧠 Study with AI
                           </button>
@@ -234,7 +240,9 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                                       e.stopPropagation();
                                       updateTaskStatus(task._id, 'in-progress');
                                     }}
-                                    className="flex-1 px-2 py-1.5 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 text-xs font-medium"
+                                    className={`flex-1 px-2 py-1.5 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 text-xs font-medium ${
+                                      lightTheme ? 'text-green-700 hover:text-green-800' : 'text-green-100'
+                                    }`}
                                   >
                                     🚀 Start
                                   </button>
@@ -243,9 +251,11 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                                       e.stopPropagation();
                                       onRescheduleClick(task);
                                     }}
-                                    className="flex-1 px-2 py-1.5 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-100 rounded-lg hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 text-xs font-medium"
+                                    className={`flex-1 px-2 py-1.5 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-lg hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 text-xs font-medium ${
+                                      lightTheme ? 'text-blue-700 hover:text-blue-800' : 'text-blue-100'
+                                    }`}
                                   >
-                                    � Reschedule
+                                    📅 Reschedule
                                   </button>
                                 </div>
                               )}
@@ -257,7 +267,9 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                                       e.stopPropagation();
                                       updateTaskStatus(task._id, 'completed');
                                     }}
-                                    className="flex-1 px-2 py-1.5 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 text-xs font-medium"
+                                    className={`flex-1 px-2 py-1.5 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 text-xs font-medium ${
+                                      lightTheme ? 'text-green-700 hover:text-green-800' : 'text-green-100'
+                                    }`}
                                   >
                                     ✅ Complete
                                   </button>
@@ -267,7 +279,9 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                                       const originalStatus = getOriginalTaskStatus(task);
                                       updateTaskStatus(task._id, originalStatus);
                                     }}
-                                    className="flex-1 px-2 py-1.5 bg-red-500/20 backdrop-blur-sm border border-red-400/30 text-red-100 rounded-lg hover:bg-red-500/30 hover:border-red-400/50 transition-all duration-200 text-xs font-medium"
+                                    className={`flex-1 px-2 py-1.5 bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-lg hover:bg-red-500/30 hover:border-red-400/50 transition-all duration-200 text-xs font-medium ${
+                                      lightTheme ? 'text-red-700 hover:text-red-800' : 'text-red-100'
+                                    }`}
                                   >
                                     ⏹️ Stop
                                   </button>
@@ -278,7 +292,9 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                           
                           {isCompleted && (
                             <div className="text-center">
-                              <span className="w-full inline-block px-3 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg text-xs font-medium">
+                              <span className={`w-full inline-block px-3 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg text-xs font-medium ${
+                                lightTheme ? 'text-green-700' : 'text-green-100'
+                              }`}>
                                 ✅ Completed
                               </span>
                             </div>
@@ -307,9 +323,13 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
               {currentIndex < maxIndex && (
                 <button
                   onClick={nextWindow}
-                  className="bg-gray-800/90 hover:bg-gray-700 border border-yellow-600/50 rounded-full p-3 transition-all duration-200 hover:scale-110 shadow-xl"
+                  className={`border rounded-full p-3 transition-all duration-200 hover:scale-110 shadow-xl ${
+                    lightTheme 
+                      ? 'bg-white/90 hover:bg-white border-yellow-600/50 hover:border-yellow-700/70' 
+                      : 'bg-gray-800/90 hover:bg-gray-700 border-yellow-600/50'
+                  }`}
                 >
-                  <ChevronRight className="w-5 h-5 text-yellow-400" />
+                  <ChevronRight className={`w-5 h-5 ${lightTheme ? 'text-yellow-600' : 'text-yellow-400'}`} />
                 </button>
               )}
             </div>
@@ -324,8 +344,8 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                   onClick={() => setCurrentIndex(index)}
                   className={`w-3 h-3 rounded-full transition-all duration-200 ${
                     currentIndex === index
-                      ? 'bg-yellow-500 scale-125' 
-                      : 'bg-gray-600 hover:bg-gray-500'
+                      ? (lightTheme ? 'bg-yellow-600 scale-125' : 'bg-yellow-500 scale-125')
+                      : (lightTheme ? 'bg-gray-400 hover:bg-gray-500' : 'bg-gray-600 hover:bg-gray-500')
                   }`}
                 />
               ))}
@@ -386,7 +406,9 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                           updateTaskStatus(selectedTask._id, 'in-progress');
                           setShowTaskModal(false);
                         }}
-                        className="flex-1 px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 font-medium"
+                        className={`flex-1 px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 font-medium ${
+                          lightTheme ? 'text-green-700 hover:text-green-800' : 'text-green-100'
+                        }`}
                       >
                         🚀 Start Task
                       </button>
@@ -396,9 +418,11 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                           setShowTaskModal(false);
                           onRescheduleClick(selectedTask);
                         }}
-                        className="flex-1 px-4 py-2 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 text-blue-100 rounded-lg hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 font-medium"
+                        className={`flex-1 px-4 py-2 bg-blue-500/20 backdrop-blur-sm border border-blue-400/30 rounded-lg hover:bg-blue-500/30 hover:border-blue-400/50 transition-all duration-200 font-medium ${
+                          lightTheme ? 'text-blue-700 hover:text-blue-800' : 'text-blue-100'
+                        }`}
                       >
-                        � Reschedule
+                        📅 Reschedule
                       </button>
                     </>
                   )}
@@ -411,7 +435,9 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                           updateTaskStatus(selectedTask._id, 'completed');
                           setShowTaskModal(false);
                         }}
-                        className="flex-1 px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 text-green-100 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 font-medium"
+                        className={`flex-1 px-4 py-2 bg-green-500/20 backdrop-blur-sm border border-green-400/30 rounded-lg hover:bg-green-500/30 hover:border-green-400/50 transition-all duration-200 font-medium ${
+                          lightTheme ? 'text-green-700 hover:text-green-800' : 'text-green-100'
+                        }`}
                       >
                         ✅ Complete Task
                       </button>
@@ -422,7 +448,9 @@ function TasksPage({ schedule, tasks, loading, updateTaskStatus, onRescheduleCli
                           updateTaskStatus(selectedTask._id, originalStatus);
                           setShowTaskModal(false);
                         }}
-                        className="flex-1 px-4 py-2 bg-red-500/20 backdrop-blur-sm border border-red-400/30 text-red-100 rounded-lg hover:bg-red-500/30 hover:border-red-400/50 transition-all duration-200 font-medium"
+                        className={`flex-1 px-4 py-2 bg-red-500/20 backdrop-blur-sm border border-red-400/30 rounded-lg hover:bg-red-500/30 hover:border-red-400/50 transition-all duration-200 font-medium ${
+                          lightTheme ? 'text-red-700 hover:text-red-800' : 'text-red-100'
+                        }`}
                       >
                         ⏹️ Stop Task
                       </button>
