@@ -8,7 +8,8 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'http://localhost:5174', 
-    'http://localhost:5175'
+    'http://localhost:5175',
+    /https:\/\/.*\.vercel\.app$/  // Allow any vercel.app subdomain
   ],
   credentials: true
 }));
