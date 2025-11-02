@@ -1,18 +1,10 @@
 {
+  "version": 2,
   "buildCommand": "npm run build",
   "outputDirectory": "./frontend/dist",
-  "installCommand": "npm install --legacy-peer-deps",
+  "installCommand": "echo 'No root dependencies' && echo 'Building frontend...'",
   "framework": null,
-  "functions": {
-    "backend/server.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/backend/server.js"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
