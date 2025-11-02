@@ -99,32 +99,41 @@ function ProgressPage({
   // Line Chart Component
   const LineChart = ({ data = [] }) => {
     const maxValue = Math.max(...data.map(d => d.value), 10);
-    const chartWidth = 800;
-    const chartHeight = 300;
+    const chartWidth = 700; // Reduced to make room for Y-axis
+    const chartHeight = 250; // Slightly reduced
+    const leftMargin = 60; // Space for Y-axis labels
+    const bottomMargin = 40; // More space for X-axis labels
     
     const points = data.map((point, index) => {
-      const x = (index / (data.length - 1)) * chartWidth;
+      const x = leftMargin + (index / (data.length - 1)) * chartWidth;
       const y = chartHeight - (point.value / maxValue) * chartHeight;
       return `${x},${y}`;
     }).join(' ');
 
+    // Generate Y-axis values
+    const yAxisValues = [];
+    const stepCount = 5;
+    for (let i = 0; i <= stepCount; i++) {
+      yAxisValues.push(Math.round((maxValue / stepCount) * i));
+    }
+
     return (
-      <div className="w-full h-80 flex items-center justify-center">
+      <div className="w-full h-96 flex items-center justify-center">
         <svg 
           width="100%" 
           height="100%" 
-          viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          viewBox={`0 0 ${chartWidth + leftMargin + 20} ${chartHeight + bottomMargin + 20}`}
           className="overflow-visible"
           preserveAspectRatio="xMidYMid meet"
         >
-          {/* Grid lines */}
-          {[0, 1, 2, 3, 4].map(i => (
+          {/* Horizontal grid lines */}
+          {yAxisValues.map((value, i) => (
             <line
               key={`grid-${i}`}
-              x1="0"
-              y1={i * (chartHeight / 4)}
-              x2={chartWidth}
-              y2={i * (chartHeight / 4)}
+              x1={leftMargin}
+              y1={chartHeight - (i / stepCount) * chartHeight}
+              x2={chartWidth + leftMargin}
+              y2={chartHeight - (i / stepCount) * chartHeight}
               stroke={lightTheme ? "#e5e7eb" : "#374151"}
               strokeWidth="1"
               opacity="0.3"
@@ -135,15 +144,61 @@ function ProgressPage({
           {data.map((_, index) => (
             <line
               key={`vgrid-${index}`}
-              x1={(index / (data.length - 1)) * chartWidth}
+              x1={leftMargin + (index / (data.length - 1)) * chartWidth}
               y1="0"
-              x2={(index / (data.length - 1)) * chartWidth}
+              x2={leftMargin + (index / (data.length - 1)) * chartWidth}
               y2={chartHeight}
               stroke={lightTheme ? "#e5e7eb" : "#374151"}
               strokeWidth="1"
               opacity="0.2"
             />
           ))}
+          
+          {/* Y-axis line */}
+          <line
+            x1={leftMargin}
+            y1="0"
+            x2={leftMargin}
+            y2={chartHeight}
+            stroke={lightTheme ? "#6b7280" : "#9ca3af"}
+            strokeWidth="2"
+          />
+          
+          {/* X-axis line */}
+          <line
+            x1={leftMargin}
+            y1={chartHeight}
+            x2={chartWidth + leftMargin}
+            y2={chartHeight}
+            stroke={lightTheme ? "#6b7280" : "#9ca3af"}
+            strokeWidth="2"
+          />
+          
+          {/* Y-axis labels */}
+          {yAxisValues.map((value, i) => (
+            <text
+              key={`ylabel-${i}`}
+              x={leftMargin - 15}
+              y={chartHeight - (i / stepCount) * chartHeight + 5}
+              textAnchor="end"
+              className={`text-sm font-medium ${lightTheme ? 'fill-gray-700' : 'fill-gray-300'}`}
+              style={{ fontFamily: "'Bodoni Moda', serif" }}
+            >
+              {value}
+            </text>
+          ))}
+          
+          {/* Y-axis title */}
+          <text
+            x="20"
+            y={chartHeight / 2}
+            textAnchor="middle"
+            className={`text-sm font-semibold ${lightTheme ? 'fill-gray-800' : 'fill-gray-200'}`}
+            style={{ fontFamily: "'Bodoni Moda', serif" }}
+            transform={`rotate(-90, 20, ${chartHeight / 2})`}
+          >
+            Tasks Completed
+          </text>
           
           {/* Chart line */}
           {data.length > 1 && (
@@ -155,47 +210,69 @@ function ProgressPage({
               strokeLinecap="round"
               strokeLinejoin="round"
               style={{
-                filter: lightTheme ? 'none' : 'drop-shadow(0 0 6px rgba(251, 191, 36, 0.6))'
+                filter: lightTheme ? 'drop-shadow(0 2px 4px rgba(234, 179, 8, 0.3))' : 'drop-shadow(0 0 6px rgba(251, 191, 36, 0.6))'
               }}
             />
           )}
           
           {/* Data points */}
           {data.map((point, index) => {
-            const x = (index / (data.length - 1)) * chartWidth;
+            const x = leftMargin + (index / (data.length - 1)) * chartWidth;
             const y = chartHeight - (point.value / maxValue) * chartHeight;
             return (
-              <circle
-                key={`point-${index}`}
-                cx={x}
-                cy={y}
-                r="6"
-                fill={lightTheme ? "#eab308" : "#fbbf24"}
-                stroke={lightTheme ? "#ffffff" : "#000000"}
-                strokeWidth="3"
-                style={{
-                  filter: lightTheme ? 'none' : 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))'
-                }}
-              />
+              <g key={`point-group-${index}`}>
+                <circle
+                  cx={x}
+                  cy={y}
+                  r="8"
+                  fill={lightTheme ? "#eab308" : "#fbbf24"}
+                  stroke={lightTheme ? "#ffffff" : "#000000"}
+                  strokeWidth="3"
+                  style={{
+                    filter: lightTheme ? 'drop-shadow(0 2px 4px rgba(234, 179, 8, 0.3))' : 'drop-shadow(0 0 8px rgba(251, 191, 36, 0.8))'
+                  }}
+                />
+                {/* Value labels on points */}
+                <text
+                  x={x}
+                  y={y - 15}
+                  textAnchor="middle"
+                  className={`text-xs font-bold ${lightTheme ? 'fill-gray-800' : 'fill-white'}`}
+                  style={{ fontFamily: "'Bodoni Moda', serif" }}
+                >
+                  {point.value}
+                </text>
+              </g>
             );
           })}
           
           {/* X-axis labels */}
           {data.map((point, index) => {
-            const x = (index / (data.length - 1)) * chartWidth;
+            const x = leftMargin + (index / (data.length - 1)) * chartWidth;
             return (
               <text
                 key={`label-${index}`}
                 x={x}
                 y={chartHeight + 25}
                 textAnchor="middle"
-                className={`text-sm ${lightTheme ? 'fill-gray-600' : 'fill-gray-400'}`}
+                className={`text-sm font-medium ${lightTheme ? 'fill-gray-700' : 'fill-gray-300'}`}
                 style={{ fontFamily: "'Bodoni Moda', serif" }}
               >
                 {point.day}
               </text>
             );
           })}
+          
+          {/* X-axis title */}
+          <text
+            x={leftMargin + chartWidth / 2}
+            y={chartHeight + bottomMargin}
+            textAnchor="middle"
+            className={`text-sm font-semibold ${lightTheme ? 'fill-gray-800' : 'fill-gray-200'}`}
+            style={{ fontFamily: "'Bodoni Moda', serif" }}
+          >
+            Days of Week
+          </text>
         </svg>
       </div>
     );
@@ -306,12 +383,12 @@ function ProgressPage({
         
         <LineChart data={progressData.weeklyProgress} />
         
-        {/* Chart Legend */}
-        <div className="flex items-center justify-center mt-4 space-x-6">
+        {/* Chart Legend - Simplified since Y-axis now shows task count */}
+        <div className="flex items-center justify-center mt-2">
           <div className="flex items-center space-x-2">
             <div className={`w-3 h-3 rounded-full ${lightTheme ? 'bg-yellow-500' : 'bg-yellow-400'}`}></div>
-            <span className={`text-sm ${lightTheme ? 'text-gray-600' : 'text-gray-400'}`}>
-              Tasks Completed
+            <span className={`text-sm font-medium ${lightTheme ? 'text-gray-700' : 'text-gray-300'}`}>
+              Daily Progress Trend
             </span>
           </div>
         </div>
