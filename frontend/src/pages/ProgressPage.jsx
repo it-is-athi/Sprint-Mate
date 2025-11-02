@@ -268,7 +268,7 @@ function ProgressPage({
               <p className={`text-3xl font-bold ${lightTheme ? 'text-gray-900' : 'text-white'}`}>
                 {progressData.currentStreak || 0}
               </p>
-              <p className={`text-sm ${lightTheme ? 'text-gray-500' : 'text-gray-500'}`}>
+              <p className={`text-sm mt-1 ${lightTheme ? 'text-gray-500' : 'text-gray-500'}`}>
                 days
               </p>
             </div>
@@ -307,7 +307,7 @@ function ProgressPage({
         <LineChart data={progressData.weeklyProgress} />
         
         {/* Chart Legend */}
-        <div className="flex items-center justify-center mt-4 space-x-6">
+        <div className="flex items-center justify-center mt-8 space-x-6">
           <div className="flex items-center space-x-2">
             <div className={`w-3 h-3 rounded-full ${lightTheme ? 'bg-yellow-500' : 'bg-yellow-400'}`}></div>
             <span className={`text-sm ${lightTheme ? 'text-gray-600' : 'text-gray-400'}`}>

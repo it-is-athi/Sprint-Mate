@@ -77,14 +77,7 @@ function ProfilePage({ user, onUpdateProfile, onLogout, loading }) {
   };
 
   const handleHelp = () => {
-    alert('Help & Support: For assistance, please contact us at support@sprintmate.com');
-  };
-
-  const handleReportProblem = () => {
-    const email = 'support@sprintmate.com';
-    const subject = 'Problem Report - Sprint Mate';
-    const body = 'Dear Sprint Mate Team,\n\nI would like to report the following issue:\n\n[Please describe your problem here]\n\nBest regards,\n' + (user?.name || 'User');
-    window.location.href = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    navigate('/dashboard/help');
   };
 
   const lightTheme = theme === 'light';
@@ -327,19 +320,6 @@ function ProfilePage({ user, onUpdateProfile, onLogout, loading }) {
           >
             <HelpCircle className="w-5 h-5" />
             Help & Feedback
-          </button>
-
-          {/* Report Problem Button */}
-          <button
-            onClick={handleReportProblem}
-            className={`w-full flex items-center justify-center gap-3 ${
-              lightTheme 
-                ? 'bg-orange-500 hover:bg-orange-600 text-white' 
-                : 'bg-orange-600/20 hover:bg-orange-600/30 text-orange-400 border border-orange-500/30'
-            } px-6 py-3 rounded-xl transition-all duration-300 font-medium`}
-          >
-            <MessageSquare className="w-5 h-5" />
-            Report Problem
           </button>
 
           {/* Logout Button */}
