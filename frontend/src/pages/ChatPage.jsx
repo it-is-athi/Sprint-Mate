@@ -439,11 +439,17 @@ function ChatPage() {
   useEffect(() => {
     const studyTask = location.state?.studyTask;
     
-    // Check if we have a study task and it's different from the last processed one
+    // Only process study task if:
+    // 1. We have a study task
+    // 2. It hasn't been processed yet
+    // 3. It's different from the last processed one
+    // 4. We're not currently loading
     if (studyTask && 
         !studyProcessed && 
-        JSON.stringify(studyTask) !== JSON.stringify(studyTaskRef.current)) {
+        JSON.stringify(studyTask) !== JSON.stringify(studyTaskRef.current) &&
+        !isLoading) {
       
+      console.log('🎯 Processing new study task:', studyTask);
       studyTaskRef.current = studyTask; // Store current task
       const { task, scheduleName } = studyTask;
       
@@ -458,13 +464,19 @@ function ChatPage() {
       setChatHistory([]);
       setStudyProcessed(true); // Prevent duplicate processing
       
-      // Create a clean study prompt with essential task details
+      // Create a comprehensive study prompt with essential task details
       const studyPrompt = `I want to study and learn about: "${task.task_title || task.name}"
 
 ${task.task_description || task.description ? `**Topic Details:** ${task.task_description || task.description}` : ''}
 **From:** ${scheduleName || 'My Studies'}
 
-Please teach me about this topic with clear explanations and practical examples.`;
+Please teach me about this topic with:
+1. Clear explanations and concepts
+2. Practical examples and use cases  
+3. Step-by-step learning approach
+4. Relevant online tutorial links from trusted educational websites
+
+I'm looking for a comprehensive learning session with additional resources to deepen my understanding.`;
 
       setQuestion(studyPrompt);
       
@@ -478,7 +490,7 @@ Please teach me about this topic with clear explanations and practical examples.
       // Clear the location state to prevent re-triggering
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, studyProcessed, isLoading]);
+  }, [location.state]); // Removed studyProcessed and isLoading from dependencies
 
   const handleStudyQuestion = async (studyPrompt) => {
     // Prevent duplicate sends with multiple checks
@@ -874,10 +886,10 @@ Please teach me about this topic with clear explanations and practical examples.
                   </div>
                 ) : (
                   <div className={`p-8 max-w-md mx-auto rounded-2xl border ${lightTheme ? 'bg-white border-gray-300' : 'bg-black/20 border-white/10'} backdrop-blur-sm`}>
-                    <div className="text-6xl mb-4"> </div>
-                    <h3 className={`text-xl font-semibold font-sans ${lightTheme ? 'text-gray-800' : 'text-gray-100'} mb-2`}>AI Assistant</h3>
+                    <div className="text-6xl mb-4">🤖</div>
+                    <h3 className={`text-xl font-semibold font-sans ${lightTheme ? 'text-gray-800' : 'text-gray-100'} mb-2`}>AI Learning Assistant</h3>
                     <p className={`${lightTheme ? 'text-gray-600' : 'text-gray-400'} font-sans`}>
-                      Ask me anything — I’ll help you plan, learn, and get things done!!
+                      Ask me anything — I'll help you learn with detailed explanations and provide helpful tutorial links from trusted educational websites!
                     </p>
                   </div>
                 )}
@@ -906,7 +918,21 @@ Please teach me about this topic with clear explanations and practical examples.
                                         prose-strong:text-blue-300
                                         prose-code:bg-gray-900/80 prose-code:px-2 prose-code:py-1 prose-code:rounded prose-code:text-blue-300
                                         prose-pre:bg-black/50 prose-pre:border prose-pre:border-white/10">
-                            <ReactMarkdown remarkPlugins={[remarkGfm]}>{chat.text}</ReactMarkdown>
+                            <ReactMarkdown 
+                              remarkPlugins={[remarkGfm]}
+                              components={{
+                                a: ({ node, ...props }) => (
+                                  <a 
+                                    {...props} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-blue-400 hover:text-blue-300 underline transition-colors"
+                                  />
+                                )
+                              }}
+                            >
+                              {chat.text}
+                            </ReactMarkdown>
                           </div>
                         </div>
                       </div>
