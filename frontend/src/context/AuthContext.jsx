@@ -29,6 +29,14 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('Logout error:', error);
     }
+    
+    // Clear chat storage on logout
+    if (user) {
+      localStorage.removeItem(`sprintmate_chat_${user.id}_general`);
+      localStorage.removeItem(`sprintmate_chat_${user.id}_pdf`);
+      localStorage.removeItem(`sprintmate_pdf_name_${user.id}`);
+    }
+    
     setUser(null);
   };
 

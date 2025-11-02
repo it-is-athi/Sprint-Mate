@@ -14,6 +14,7 @@ import TasksContainer from './pages/TasksContainer';
 import ChatPage from './pages/ChatPage';
 import ProfileContainer from './pages/ProfileContainer';
 import ProgressContainer from './pages/ProgressContainer';
+import HelpPage from './pages/HelpPage';
 
 export default function AppRoutes() {
   return (
@@ -33,6 +34,7 @@ export default function AppRoutes() {
         <Route path="progress" element={<ProgressContainer />} />
         <Route path="chat" element={<ChatPage />} />
         <Route path="profile" element={<ProfileContainer />} />
+        <Route path="help" element={<HelpPage />} />
       </Route>
     </Routes>
   );

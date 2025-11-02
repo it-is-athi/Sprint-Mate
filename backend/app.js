@@ -5,7 +5,11 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'http://localhost:5174', 
+    'http://localhost:5175'
+  ],
   credentials: true
 }));
 app.use(express.json());
@@ -23,11 +27,15 @@ const chatbotRoutes = require('./routes/chatbotRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const ragRoutes = require('./routes/ragRoutes');
+const savedChatRoutes = require('./routes/savedChatRoutes');
+const { protect } = require('./middlewares/authMiddleware');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/bot', chatbotRoutes);
 app.use('/api/schedules', scheduleRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/rag', ragRoutes);
+// Saved chats (requires authentication)
+app.use('/api/saved-chats', protect, savedChatRoutes);
 
 module.exports = app;

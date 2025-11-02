@@ -345,7 +345,7 @@ function ProgressPage({
               <p className={`text-3xl font-bold ${lightTheme ? 'text-gray-900' : 'text-white'}`}>
                 {progressData.currentStreak || 0}
               </p>
-              <p className={`text-sm ${lightTheme ? 'text-gray-500' : 'text-gray-500'}`}>
+              <p className={`text-sm mt-1 ${lightTheme ? 'text-gray-500' : 'text-gray-500'}`}>
                 days
               </p>
             </div>
